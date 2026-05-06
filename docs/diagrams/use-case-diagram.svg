@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="420" viewBox="0 0 1000 420">
+  <style>
+    .actor { stroke:#000; stroke-width:3; fill:none }
+    .actor-head { stroke:#000; stroke-width:3; fill:none }
+    .sys-box { fill:#ffffff; stroke:#333; stroke-width:2 }
+    .usecase { fill:#fff; stroke:#333; stroke-width:2 }
+    .label { font-family: Arial, Helvetica, sans-serif; font-size:16px; fill:#111 }
+  </style>
+
+  <!-- Actor (stick figure) -->
+  <g transform="translate(90,120)">
+    <circle class="actor-head" cx="0" cy="0" r="20" />
+    <line class="actor" x1="0" y1="20" x2="0" y2="80" />
+    <line class="actor" x1="0" y1="40" x2="-30" y2="20" />
+    <line class="actor" x1="0" y1="40" x2="30" y2="20" />
+    <line class="actor" x1="0" y1="80" x2="-25" y2="120" />
+    <line class="actor" x1="0" y1="80" x2="25" y2="120" />
+    <text class="label" x="-40" y="150">User</text>
+  </g>
+
+  <!-- System box -->
+  <rect class="sys-box" x="300" y="40" width="620" height="340" rx="8" ry="8" />
+  <text class="label" x="320" y="68" style="font-weight:700; font-size:18px">AI Travel Planner</text>
+
+  <!-- Use case ovals -->
+  <!-- positions: y 90, 140, 190, 240, 290, 340 -->
+  <ellipse class="usecase" cx="540" cy="98" rx="220" ry="26" />
+  <text class="label" x="360" y="103">Enter destination</text>
+
+  <ellipse class="usecase" cx="540" cy="148" rx="220" ry="26" />
+  <text class="label" x="360" y="153">Enter number of days</text>
+
+  <ellipse class="usecase" cx="540" cy="198" rx="220" ry="26" />
+  <text class="label" x="360" y="203">Select travel style</text>
+
+  <ellipse class="usecase" cx="540" cy="248" rx="220" ry="26" />
+  <text class="label" x="360" y="253">Generate travel plan</text>
+
+  <ellipse class="usecase" cx="540" cy="298" rx="220" ry="26" />
+  <text class="label" x="360" y="303">View generated itinerary</text>
+
+  <ellipse class="usecase" cx="540" cy="348" rx="220" ry="26" />
+  <text class="label" x="360" y="353">Save travel plan</text>
+
+  <!-- Connector lines from actor to use cases -->
+  <line x1="110" y1="140" x2="360" y2="98" stroke="#000" stroke-width="2" />
+  <line x1="110" y1="140" x2="360" y2="148" stroke="#000" stroke-width="2" />
+  <line x1="110" y1="140" x2="360" y2="198" stroke="#000" stroke-width="2" />
+  <line x1="110" y1="140" x2="360" y2="248" stroke="#000" stroke-width="2" />
+  <line x1="110" y1="140" x2="360" y2="298" stroke="#000" stroke-width="2" />
+  <line x1="110" y1="140" x2="360" y2="348" stroke="#000" stroke-width="2" />
+
+</svg>

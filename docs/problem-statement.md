@@ -130,17 +130,7 @@ A plan with parks, walking areas, viewpoints, and nature activities, displayed o
 **Output:**
 A balanced itinerary combining attractions, neighborhoods, food areas, and outdoor spots with clear map organization.
 
-## 7. Future Roadmap
-
-The first version focuses on core features: destination input, travel day selection, preference-based personalization, AI itinerary generation, and map visualization.
-
-**Planned enhancements for future versions:**
-- **Weather-based planning** - Adapt suggestions based on weather conditions and seasons
-- **Advanced personalization** - Budget levels, food preferences, transportation options, trip pace, accessibility needs
-- **User accounts** - Save and manage multiple itineraries
-- **Route optimization** - Real-time traffic and transportation time estimates
-
-## 8. Initial Features (Version 1.0)
+## 7. Initial Features
 
 The initial release will focus on core functionality:
 
@@ -151,3 +141,13 @@ The initial release will focus on core functionality:
 - **Location-aware organization** - AI groups nearby attractions to optimize routing
 - **Map visualization** - Interactive map displays all recommended places
 - **Structured presentation** - Plan shown with morning/afternoon/evening activities
+
+## 8. Future Roadmap
+
+The first version focuses on core features: destination input, travel day selection, preference-based personalization, AI itinerary generation, and map visualization.
+
+**Planned enhancements for future versions:**
+- **Weather-based planning** - Adapt suggestions based on weather conditions and seasons
+- **Advanced personalization** - Budget levels, food preferences, transportation options, trip pace, accessibility needs
+- **User accounts** - Save and manage multiple itineraries
+- **Route optimization** - Real-time traffic and transportation time estimates
