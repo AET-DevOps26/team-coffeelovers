@@ -39,7 +39,7 @@ The AI Travel Planner generates a personalized travel itinerary based on three c
 **User Input:**
 1. **Destination** - Where the user wants to travel
 2. **Number of travel days** - Duration of the trip
-3. **Travel type/preference** - Style of travel (e.g., popular attractions, historical, outdoor, food & culture, mixed)
+3. **Travel preference** - Style of travel (e.g., popular attractions, historical, outdoor, food & culture, mixed)
 
 **Generated Output:**
 The system creates a structured day-by-day travel plan that includes:
