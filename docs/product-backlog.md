@@ -1,5 +1,11 @@
 # Product Backlog: AI Travel Planner
 
+## Navigation
+
+- Scope and context: [1. Overview](#1-overview)
+- Epic groups and planning phases: [2. Epics](#2-epics)
+- MVP focus: [3. Suggested MVP Scope](#3-suggested-mvp-scope)
+
 ## 1. Overview
 
 This product backlog defines the main epics and user stories for the AI Travel Planner application.
@@ -7,12 +13,6 @@ This product backlog defines the main epics and user stories for the AI Travel P
 The backlog is organized into epics. Each epic contains user stories, acceptance criteria, and possible tasks.
 
 ### Note: This backlog is a living document and can be updated as the project scope becomes clearer.
-
-## Navigation
-
-- Scope and context: [1. Overview](#1-overview)
-- Epic groups and planning phases: [2. Epics](#2-epics)
-- MVP focus: [3. Suggested MVP Scope](#3-suggested-mvp-scope)
 
 ---
 
