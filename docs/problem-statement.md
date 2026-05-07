@@ -54,6 +54,12 @@ The system creates a structured day-by-day travel plan that includes:
 **Location-Aware Planning:**
 The application considers attractions' physical locations to create efficient routes—grouping nearby places on the same day to minimize unnecessary travel time and create a logical, easy-to-follow itinerary.
 
+**Interactive Plan Customization:**
+Users can edit and personalize their generated itineraries:
+- **Reorder activities** - Drag-and-drop activities to change their sequence within a day or move them to different days
+- **Remove or swap activities** - Delete activities that don't interest them or replace them with AI-suggested alternatives
+- **View activity details** - Click on any activity or map marker to see full details (address, opening hours, description)
+
 ## 4. Intended Users
 
 The application is intended for people who want to plan trips quickly and easily:
@@ -132,22 +138,27 @@ A balanced itinerary combining attractions, neighborhoods, food areas, and outdo
 
 ## 7. Future Roadmap
 
-The first version focuses on core features: destination input, travel day selection, preference-based personalization, AI itinerary generation, and map visualization.
+The first version focuses on core features with interactive customization. Future versions will enhance the social and personalization aspects.
 
 **Planned enhancements for future versions:**
+- **Sharing & collaboration** - Share itineraries with others by entering email/username; recipients can view, like, and comment on shared plans
+- **User accounts** - Create accounts to save, organize, and manage multiple itineraries
+- **Advanced collaboration features** - Collaborative editing, reviews
 - **Weather-based planning** - Adapt suggestions based on weather conditions and seasons
 - **Advanced personalization** - Budget levels, food preferences, transportation options, trip pace, accessibility needs
-- **User accounts** - Save and manage multiple itineraries
 - **Route optimization** - Real-time traffic and transportation time estimates
 
 ## 8. Initial Features (Version 1.0)
 
-The initial release will focus on core functionality:
+The initial release will focus on core functionality and interactive customization:
 
 - **Destination input** - Users enter their desired travel destination
 - **Trip duration** - Users specify number of travel days
 - **Preference selection** - Users choose travel style/type
 - **AI itinerary generation** - System processes inputs and generates day-by-day plan
 - **Location-aware organization** - AI groups nearby attractions to optimize routing
-- **Map visualization** - Interactive map displays all recommended places
+- **Interactive map visualization** - Map displays all recommended places with clickable markers showing activity details
 - **Structured presentation** - Plan shown with morning/afternoon/evening activities
+- **Drag-and-drop reordering** - Users can drag activities to change their order within or between days
+- **Activity customization** - Users can remove activities from the plan or request AI-suggested alternatives to swap in
+- **Activity details modal** - Click any activity or map marker to view full details (address, hours, estimated duration, description)
