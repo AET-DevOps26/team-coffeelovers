@@ -4,7 +4,11 @@
 
 - Scope and context: [1. Overview](#1-overview)
 - Epic groups and planning phases: [2. Epics](#2-epics)
-- MVP focus: [3. Suggested MVP Scope](#3-suggested-mvp-scope)
+- Direct epic links:
+	- [Epic 1: Trip Input and AI Planning](#epic-1-trip-input-and-ai-planning)
+	- [Epic 2: Itinerary, Maps, and Editing](#epic-2-itinerary-maps-and-editing)
+	- [Epic 3: Accounts, Favorites, and Sharing](#epic-3-accounts-favorites-and-sharing)
+	- [Epic 4: Platform and Delivery](#epic-4-platform-and-delivery)
 
 ## 1. Overview
 
@@ -547,30 +551,5 @@ As a developer, I want an initial GitHub Actions pipeline so that code and docum
 - [ ] Add Markdown lint config
 - [ ] Add Python lint config
 - [ ] Test workflow in GitHub Actions
-
----
-
-# 3. Suggested MVP Scope
-
-The first version of the AI Travel Planner should focus on Phase 1 and the foundation epics that support it:
-
-Phase 1: Core Travel Planning
-
-1. Trip Input and AI Planning
-2. Itinerary, Maps, and Editing
-
-Supporting Foundations:
-
-1. Platform and Delivery
-
-The following epic can be added after the MVP:
-
-1. Accounts, Favorites, and Sharing
-
-Future enhancements can include:
-
-1. Advanced personalization
-2. Weather-based planning
-3. Collaboration features
 
 ---
