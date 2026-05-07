@@ -8,14 +8,11 @@ The backlog is organized into epics. Each epic contains user stories, acceptance
 
 ### Note: This backlog is a living document and can be updated as the project scope becomes clearer.
 
----
-
 ## Navigation
 
 - Scope and context: [1. Overview](#1-overview)
 - Epic groups and planning phases: [2. Epics](#2-epics)
-- MVP focus: [3. Suggested MVP Scope](#5-suggested-mvp-scope)
-- Priority order for planning: [4. Backlog Priority](#6-backlog-priority)
+- MVP focus: [3. Suggested MVP Scope](#3-suggested-mvp-scope)
 
 ---
 
@@ -575,16 +572,5 @@ Future enhancements can include:
 1. Advanced personalization
 2. Weather-based planning
 3. Collaboration features
-
----
-
-# 4. Backlog Priority
-
-| Priority | Epic | Reason |
-| --- | --- | --- |
-| High | Trip Input and AI Planning | Required to collect trip details and generate itineraries |
-| High | Itinerary, Maps, and Editing | Required to display plans, show map locations, and let users customize results |
-| Medium | Platform and Delivery | Supports the frontend, backend, documentation, and CI workflow |
-| Low | Accounts, Favorites, and Sharing | Useful after the core planning flow works |
 
 ---
