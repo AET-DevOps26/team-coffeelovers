@@ -154,10 +154,10 @@ The initial release will focus on core functionality and interactive customizati
 
 - **Destination input** - Users enter their desired travel destination
 - **Trip duration** - Users specify number of travel days
-- **Preference selection** - Users choose travel style/type
+- **Preference selection** - Users choose travel style
 - **AI itinerary generation** - System processes inputs and generates day-by-day plan
 - **Location-aware organization** - AI groups nearby attractions to optimize routing
-- **Interactive map visualization** - Map displays all recommended places with clickable markers showing activity details
+- **Interactive map visualization** - Map displays all recommended places
 - **Structured presentation** - Plan shown with morning/afternoon/evening activities
 - **Drag-and-drop reordering** - Users can drag activities to change their order within or between days
 - **Activity customization** - Users can remove activities from the plan or request AI-suggested alternatives to swap in
