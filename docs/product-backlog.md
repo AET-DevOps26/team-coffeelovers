@@ -16,7 +16,9 @@ This product backlog defines the main epics and user stories for the AI Travel P
 
 The backlog is organized into epics. Each epic contains user stories, acceptance criteria, and possible tasks.
 
-### Note: This backlog is a living document and can be updated as the project scope becomes clearer.
+### Note
+
+This backlog is a living document and should be updated as the project scope becomes clearer.
 
 ---
 
