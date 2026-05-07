@@ -39,7 +39,7 @@ The AI Travel Planner generates a personalized travel itinerary based on three c
 **User Input:**
 1. **Destination** - Where the user wants to travel
 2. **Number of travel days** - Duration of the trip
-3. **Travel type/preference** - Style of travel (e.g., popular attractions, historical, outdoor, food & culture, mixed)
+3. **Travel preference** - Style of travel (e.g., popular attractions, historical, outdoor, food & culture, mixed)
 
 **Generated Output:**
 The system creates a structured day-by-day travel plan that includes:
@@ -148,16 +148,16 @@ The first version focuses on core features with interactive customization. Futur
 - **Advanced personalization** - Budget levels, food preferences, transportation options, trip pace, accessibility needs
 - **Route optimization** - Real-time traffic and transportation time estimates
 
-## 8. Initial Features (Version 1.0)
+## 8. Initial Features
 
 The initial release will focus on core functionality and interactive customization:
 
 - **Destination input** - Users enter their desired travel destination
 - **Trip duration** - Users specify number of travel days
-- **Preference selection** - Users choose travel style/type
+- **Preference selection** - Users choose travel style
 - **AI itinerary generation** - System processes inputs and generates day-by-day plan
 - **Location-aware organization** - AI groups nearby attractions to optimize routing
-- **Interactive map visualization** - Map displays all recommended places with clickable markers showing activity details
+- **Interactive map visualization** - Map displays all recommended places
 - **Structured presentation** - Plan shown with morning/afternoon/evening activities
 - **Drag-and-drop reordering** - Users can drag activities to change their order within or between days
 - **Activity customization** - Users can remove activities from the plan or request AI-suggested alternatives to swap in
