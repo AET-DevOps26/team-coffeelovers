@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-coffeelovers}
+      POSTGRES_USER: ${POSTGRES_USER:-coffeelovers}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coffeelovers}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-coffeelovers}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-coffeelovers}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-coffeelovers}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-coffeelovers}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:8080}
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # TODO: add genai service once genai/ directory is created
+  # genai:
+  #   build:
+  #     context: ./genai
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
