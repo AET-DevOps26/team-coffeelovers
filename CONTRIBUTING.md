@@ -2,8 +2,6 @@
 
 This document explains how we work on this project, how branches should be created, how changes should be merged, and what every contributor should follow.
 
----
-
 ## Table of Contents
 
 - [General Rules](#1-general-rules)
@@ -13,8 +11,6 @@ This document explains how we work on this project, how branches should be creat
 - [Code Standards](#5-code-standards)
 - [README Update Requirements](#6-readme-update-requirements)
 - [Questions and Help](questions-and-help)
-
----
 
 ## 1. General Rules
 
@@ -30,8 +26,6 @@ Before contributing, please confirm that you accept the following rules:
 - ✅ Delete branches after merges
 - ✅ Do not commit secrets, API keys, tokens, or private credentials
 
----
-
 ## 2. Branching Strategy
 
 ### `main`
@@ -45,7 +39,6 @@ Rules for `main`:
 - Direct commits to `main` are not allowed.
 - Changes should reach `main` only after they are first merged and tested in `develop`.
 
-
 ### `develop`
 
 The `develop` branch is used for development and integration.
@@ -56,7 +49,6 @@ Rules for `develop`:
 - The team tests and checks changes in `develop`.
 - When `develop` is stable, it can be merged into `main`.
 - New branches must always be created from the latest version of `develop`.
-
 
 ### Branch Types
 
@@ -78,8 +70,6 @@ Format: `<type>/<issue-number>-<task-definition>`
 - **Task Definition**: Hyphen-separated, short description
 - All letters must be **lowercase**
 - Use hyphens (`-`) instead of spaces
-
----
 
 ## 3. Development Process
 
@@ -111,8 +101,6 @@ Format: `<type>/<issue-number>-<task-definition>`
 
 Changes in the develop branch are regularly merged to main.
 
----
-
 ## 4. Merge Flow
 
 Our project uses the **Git Flow** model:
@@ -125,8 +113,6 @@ develop (development)
 feature/xxx (task branches)
 ```
 
----
-
 ## 5. Code Standards
 
 ### General Principles
@@ -136,8 +122,6 @@ feature/xxx (task branches)
 - Remove unused code.
 - Remove unnecessary comments.
 - Do not commit temporary test files.
-
----
 
 ## 6. README Update Requirements
 
@@ -151,8 +135,6 @@ feature/xxx (task branches)
 - Environment variables are added or changed
 - Running instructions change
 - Important project decisions are made
-
----
 
 ## Questions and Help
 
