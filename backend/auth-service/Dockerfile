@@ -10,5 +10,5 @@ RUN gradle bootJar --no-daemon
 FROM gcr.io/distroless/java21-debian12:nonroot
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
-EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
