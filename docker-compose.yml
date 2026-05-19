@@ -16,10 +16,10 @@ services:
       retries: 5
     restart: unless-stopped
 
-  backend:
+  auth-service:
     build:
-      context: ./backend/auth-service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: auth-service/Dockerfile
     ports:
       - "8081:8081"
     environment:
@@ -43,7 +43,7 @@ services:
     environment:
       - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:8081}
     depends_on:
-      - backend
+      - auth-service
     restart: unless-stopped
 
   # TODO: add genai service once genai/ directory is created
