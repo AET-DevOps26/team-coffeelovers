@@ -17,8 +17,15 @@ The goal of this project is to make travel planning faster, easier, and more pra
 - Organize suggestions into a day-by-day plan
 - Use map and location information to improve route quality
 
+## Repository Structure
+
+- `/api` : OpenAPI / API specifications.
+- `/backend` : Backend microservices
+- `/client` : Frontend application.
+- `/infra` : Docker, infrastructure and deployment files.
+- `.github/workflows` : CI pipeline definitions.
+
 ## Documentation
 
 - [Problem Statement](docs/problem-statement.md)
 - [Launch the System](docs/how-to-launch.md)
-
