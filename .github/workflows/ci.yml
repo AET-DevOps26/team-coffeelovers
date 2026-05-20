@@ -91,10 +91,5 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate docker-compose config
-        run: |
-          if command -v docker >/dev/null 2>&1; then
-            infra/docker-compose.yml
-          else
-            echo "docker not available on runner; skipping docker-compose config check"
-          fi
+        run: docker compose -f infra/docker-compose.yml config
         # Validates root docker-compose.yml if Docker is available on the runner
