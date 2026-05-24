@@ -61,7 +61,7 @@ function LandingPage() {
       <section style={{
         position: "relative",
         minHeight: "100vh",
-        background: "linear-gradient(rgba(20,25,45,0.68), rgba(20,25,45,0.68)), url('/images/main-background.jpg') center center / cover no-repeat",
+        background: "linear-gradient(rgba(20,25,45,0.55) 0%, rgba(20,25,45,0.08) 40%, rgba(20,25,45,0.08) 60%, rgba(20,25,45,0.55) 100%), url('/images/main-background.jpg') center 60% / cover no-repeat",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -239,7 +239,10 @@ function LandingPage() {
 
           {/* Submit */}
           <button
-            onClick={() => navigate("/plans")}
+            onClick={() => {
+              const p = new URLSearchParams({ destination, start: startDate, end: endDate, preference });
+              navigate(`/itinerary?${p.toString()}`);
+            }}
             style={{
               width: "100%",
               padding: "15px",
