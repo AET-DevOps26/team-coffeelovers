@@ -49,13 +49,10 @@ const FEATURES = [
 
 function LandingPage() {
   const [destination, setDestination] = useState("");
-  const [days, setDays] = useState(3);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [preference, setPreference] = useState("popular");
   const navigate = useNavigate();
-
-  const handlePlanTrip = () => {
-    navigate("/plans");
-  };
 
   return (
     <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", minHeight: "100vh" }}>
@@ -148,8 +145,8 @@ function LandingPage() {
           zIndex: 1,
         }}>
 
-          {/* Destination + Duration row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}>
+          {/* Destination + Start Date + End Date */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 24 }}>
             <div>
               <label htmlFor="destination" style={labelStyle}>Destination</label>
               <div style={{ position: "relative" }}>
@@ -165,24 +162,24 @@ function LandingPage() {
               </div>
             </div>
             <div>
-              <label htmlFor="days" style={labelStyle}>Trip Duration</label>
-              <div style={{ position: "relative" }}>
-                <span style={inputIconStyle}>🗓</span>
-                <input
-                  id="days"
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={days}
-                  onChange={e => setDays(Number(e.target.value))}
-                  style={{ ...inputStyle, paddingLeft: 38, paddingRight: 48 }}
-                />
-                <span style={{
-                  position: "absolute", right: 14, top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "#9CA3AF", fontSize: 13,
-                }}>days</span>
-              </div>
+              <label htmlFor="startDate" style={labelStyle}>Start Date</label>
+              <input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label htmlFor="endDate" style={labelStyle}>End Date</label>
+              <input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+                style={inputStyle}
+              />
             </div>
           </div>
 
@@ -242,7 +239,7 @@ function LandingPage() {
 
           {/* Submit */}
           <button
-            onClick={handlePlanTrip}
+            onClick={() => navigate("/plans")}
             style={{
               width: "100%",
               padding: "15px",
