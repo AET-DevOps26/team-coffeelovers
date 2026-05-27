@@ -30,8 +30,6 @@ Before contributing, please confirm that you accept the following rules:
 
 ### `main`
 
-The `main` branch contains the stable version of the project.
-
 Rules for `main`:
 
 - Code in `main` should always be stable.
@@ -40,8 +38,6 @@ Rules for `main`:
 - Changes should reach `main` only after they are first merged and tested in `develop`.
 
 ### `develop`
-
-The `develop` branch is used for development and integration.
 
 Rules for `develop`:
 
@@ -56,7 +52,7 @@ Rules for `develop`:
 |--------|---------|-------------|
 | `main` | Production environment. Only for releases. | - |
 | `develop` | Development environment. All features merge here. | `main` |
-| `feature/*` | New feature development | `dev` |
+| `feature/*` | New feature development | `develop` |
 | `bugfix/*` | Bug fixes | `develop` |
 | `hotfix/*` | Critical production fixes | `main` |
 
@@ -85,7 +81,7 @@ Format: `<type>/<issue-number>-<task-definition>`
 ### Step 4: Push to Branch
 ### Step 5: Create a Pull Request
 
-- Select Base: `develop`, Compare: `feature/10-create-contribution-guide`
+- Select Base: `develop`, Compare: `feature/...`
 - Write a title and description
 
 ### Step 6: Review Process
@@ -93,7 +89,6 @@ Format: `<type>/<issue-number>-<task-definition>`
 - At least 1 review is required
 - All tests must pass
 - Merge if there are no conflicts
-- Feature branch will be deleted
 
 **After PR is merged, feature branch should be deleted.**
 
