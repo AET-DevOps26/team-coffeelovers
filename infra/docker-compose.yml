@@ -16,18 +16,19 @@ services:
       retries: 5
     restart: unless-stopped
 
-  backend:
+  auth-service:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: auth-service/Dockerfile
     ports:
-      - "8081:8080"
+      - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-coffeelovers}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-coffeelovers}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-coffeelovers}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8081
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,9 +41,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:8080}
+      - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:8081}
     depends_on:
-      - backend
+      - auth-service
     restart: unless-stopped
 
   # TODO: add genai service once genai/ directory is created
