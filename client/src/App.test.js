@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 
-test('renders Home Page in the navbar', () => {
+test('renders the Home Page heading', () => {
   render(
     <MemoryRouter>
       <App />
