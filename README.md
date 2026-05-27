@@ -21,4 +21,7 @@ The goal of this project is to make travel planning faster, easier, and more pra
 
 - [Problem Statement](docs/problem-statement.md)
 - [Launch the System](docs/how-to-launch.md)
+- [Infrastructure Automation](docs/infrastructure-automation.md)
+
+The infrastructure automation docs are written for the existing Azure environment: resource group `devops`, virtual network `devops-vnet`, subnet `default`, network interface `devops225_z1`, VM `devops`, and public IP `172.160.248.100`.
 

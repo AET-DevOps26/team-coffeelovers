@@ -1,0 +1,61 @@
+---
+- name: Prepare Azure VM and deploy the project
+  hosts: app
+  become: true
+  gather_facts: true
+
+  vars:
+    docker_packages:
+      - docker.io
+      - docker-compose-plugin
+      - git
+      - ca-certificates
+      - curl
+      - gnupg
+
+  tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name: "{{ docker_packages }}"
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is enabled and running
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Add the SSH user to the docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: true
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: "{{ app_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Clone or update the application repository
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_path }}"
+        version: "{{ repo_branch }}"
+        force: true
+
+    - name: Render the runtime environment file
+      ansible.builtin.copy:
+        dest: "{{ app_path }}/.env"
+        mode: "0600"
+        content: |
+          POSTGRES_DB={{ postgres_db }}
+          POSTGRES_USER={{ postgres_user }}
+          POSTGRES_PASSWORD={{ postgres_password }}
+          PUBLIC_API_URL={{ public_api_url }}
+
+    - name: Start the application stack with Docker Compose
+      ansible.builtin.command: docker compose up -d --build
+      args:
+        chdir: "{{ app_path }}"

@@ -1,0 +1,9 @@
+repo_url: "https://github.com/AET-DevOps26/team-coffeelovers.git"
+repo_branch: "main"
+app_path: "/opt/team-coffeelovers"
+
+postgres_db: "coffeelovers"
+postgres_user: "coffeelovers"
+postgres_password: "change-me-before-running"
+
+public_api_url: "http://172.160.248.100:8081"
