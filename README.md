@@ -21,4 +21,3 @@ The goal of this project is to make travel planning faster, easier, and more pra
 
 - [Problem Statement](docs/problem-statement.md)
 - [Launch the System](docs/how-to-launch.md)
-
