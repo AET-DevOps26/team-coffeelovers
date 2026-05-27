@@ -25,3 +25,16 @@ The goal of this project is to make travel planning faster, easier, and more pra
 
 The infrastructure automation docs are written for the existing Azure environment: resource group `devops`, virtual network `devops-vnet`, subnet `default`, network interface `devops225_z1`, VM `devops`, and public IP `172.160.248.100`.
 
+## Repository Structure
+
+- `/api` : OpenAPI / API specifications.
+- `/backend` : Backend microservices
+- `/client` : Frontend application.
+- `/infra` : Docker, infrastructure and deployment files.
+- `.github/workflows` : CI pipeline definitions.
+
+## Responsibilities
+
+- **Paulina**: Frontend development — UI, React components, and client-side tests.
+- **Adnan**: Backend services — Spring Boot microservices, APIs, and server-side logic.
+- **Berfin**: Generative AI integration and prompts — responsibility for GenAI features, prompt design, and quality checks.

@@ -23,7 +23,7 @@ function HomePage() {
 
   return (
     <div>
-      <h1>Ana Sayfa</h1>
+      <h1>Home Page</h1>
 
       {error && <p>{error}</p>}
 
