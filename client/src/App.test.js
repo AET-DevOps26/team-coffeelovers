@@ -2,11 +2,20 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 
-test('renders the Home Page heading', () => {
+test('renders landing page hero heading', () => {
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={['/']}>
       <App />
     </MemoryRouter>
   );
-  expect(screen.getByRole('heading', { name: /Home Page/i })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /AI-Powered Travel Planner/i })).toBeInTheDocument();
+});
+
+test('renders navbar on plans page', () => {
+  render(
+    <MemoryRouter initialEntries={['/plans']}>
+      <App />
+    </MemoryRouter>
+  );
+  expect(screen.getByText(/WeGO/i)).toBeInTheDocument();
 });
