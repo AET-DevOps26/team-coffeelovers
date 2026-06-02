@@ -109,7 +109,7 @@ The GenAI service can be added to `docker-compose.yml` as an independent service
 ```yaml
 genai:
   build:
-    context: ./genai
+    context: ../genai
     dockerfile: Dockerfile
   ports:
     - "8001:8001"
