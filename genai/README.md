@@ -134,7 +134,7 @@ From the local browser, the service is available at:
 http://localhost:8001
 ```
 
-Verification Commands
+## Verification Commands
 
 Install dependencies:
 
