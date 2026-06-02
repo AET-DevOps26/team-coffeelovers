@@ -18,7 +18,7 @@ services:
 
   auth-service:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: auth-service/Dockerfile
     ports:
       - "8081:8081"
@@ -36,7 +36,7 @@ services:
 
   client:
     build:
-      context: ./client
+      context: ../client
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -48,7 +48,7 @@ services:
 
   genai:
     build:
-      context: ./genai
+      context: ../genai
       dockerfile: Dockerfile
     ports:
       - "8001:8001"
