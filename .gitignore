@@ -79,3 +79,5 @@ client/coverage/
 .cache/
 .parcel-cache/
 CLAUDE.md
+
+.venv/
