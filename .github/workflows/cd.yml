@@ -44,6 +44,14 @@ jobs:
           push: true
           tags: ${{ env.IMAGE_PREFIX }}/auth-service:latest
 
+      - name: Build and push genai-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./genai
+          dockerfile: ./genai/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}/genai-service:latest
+
   deploy:
     name: Deploy to AET Cluster
     runs-on: ubuntu-latest
@@ -71,5 +79,6 @@ jobs:
             --namespace team-coffeelovers \
             --create-namespace \
             --set secrets.postgresPassword=${{ secrets.POSTGRES_PASSWORD }} \
+            --set secrets.openaiApiKey=${{ secrets.OPENAI_API_KEY }} \
             --set global.image.tag=latest \
             --wait --timeout 5m

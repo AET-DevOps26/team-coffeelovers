@@ -3,11 +3,12 @@ global:
     registry: ghcr.io/aet-devops26/team-coffeelovers
     tag: latest
 
-# Postgres password must be supplied at deploy time — never commit a real value here.
-# Local dev:  helm install --set secrets.postgresPassword=localdev coffeelovers .
-# CI/CD:      helm upgrade --install --set secrets.postgresPassword=${{ secrets.POSTGRES_PASSWORD }} ...
+# Secrets must be supplied at deploy time — never commit real values here.
+# Local dev:  helm install --set secrets.postgresPassword=localdev --set secrets.openaiApiKey=sk-... coffeelovers .
+# CI/CD:      passed automatically via GitHub Actions secrets
 secrets:
   postgresPassword: ""
+  openaiApiKey: ""
 
 postgres:
   image: postgres:16-alpine
@@ -33,6 +34,7 @@ ingress:
   paths:
     frontend: /
     api: /auth
+    genai: /genai
 
 services:
   client:
@@ -68,6 +70,19 @@ services:
       requests:
         memory: 256Mi
         cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+  genai-service:
+    enabled: true
+    port: 8001
+    image:
+      repository: genai-service
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
       limits:
         memory: 512Mi
         cpu: 500m

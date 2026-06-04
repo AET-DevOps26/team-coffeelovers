@@ -30,3 +30,12 @@ spec:
                 name: auth-service
                 port:
                   number: {{ (index .Values.services "auth-service").port }}
+          {{- if (index .Values.services "genai-service").enabled }}
+          - path: {{ .Values.ingress.paths.genai }}
+            pathType: Prefix
+            backend:
+              service:
+                name: genai-service
+                port:
+                  number: {{ (index .Values.services "genai-service").port }}
+          {{- end }}
