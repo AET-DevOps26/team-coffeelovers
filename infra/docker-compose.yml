@@ -18,7 +18,7 @@ services:
 
   auth-service:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: auth-service/Dockerfile
     ports:
       - "8081:8081"
@@ -36,7 +36,7 @@ services:
 
   client:
     build:
-      context: ./client
+      context: ../client
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -46,18 +46,17 @@ services:
       - auth-service
     restart: unless-stopped
 
-  # TODO: add genai service once genai/ directory is created
-  # genai:
-  #   build:
-  #     context: ./genai
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
-  #   depends_on:
-  #     - backend
-  #   restart: unless-stopped
+  genai:
+    build:
+      context: ../genai
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-gpt-3.5-turbo}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    restart: unless-stopped
 
 volumes:
   postgres_data:
