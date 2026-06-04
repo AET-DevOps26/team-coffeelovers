@@ -1,8 +1,0 @@
-resource_group_name   = "devops"
-virtual_network_name   = "devops-vnet"
-subnet_name           = "default"
-network_interface_name = "devops225_z1"
-vm_name               = "devops"
-admin_username        = "azureuser"
-ssh_public_key_path   = "C:/Users/your-user/.ssh/id_rsa.pub"
-public_ip_address     = "172.160.248.100"
