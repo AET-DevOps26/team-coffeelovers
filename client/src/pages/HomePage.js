@@ -5,7 +5,7 @@ function HomePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/home")
+    fetch(`${process.env.REACT_APP_API_URL}/api/home`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Backend request failed");
