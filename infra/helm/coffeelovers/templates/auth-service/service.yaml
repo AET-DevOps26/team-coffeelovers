@@ -1,0 +1,17 @@
+{{- $svc := index .Values.services "auth-service" }}
+{{- if $svc.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  labels:
+    app.kubernetes.io/name: auth-service
+    {{- include "coffeelovers.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
+  selector:
+    app.kubernetes.io/name: auth-service
+{{- end }}

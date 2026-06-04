@@ -1,0 +1,46 @@
+{{- $svc := .Values.services.client }}
+{{- if $svc.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  labels:
+    app.kubernetes.io/name: client
+    {{- include "coffeelovers.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: client
+    spec:
+      containers:
+        - name: client
+          image: {{ include "coffeelovers.image" (dict "registry" .Values.global.image.registry "repository" $svc.image.repository "tag" .Values.global.image.tag) }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ $svc.port }}
+          {{- if $svc.env }}
+          env:
+            {{- toYaml $svc.env | nindent 12 }}
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ $svc.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ $svc.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            {{- toYaml $svc.resources | nindent 12 }}
+{{- end }}

@@ -1,0 +1,50 @@
+{{- $svc := index .Values.services "auth-service" }}
+{{- if $svc.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  labels:
+    app.kubernetes.io/name: auth-service
+    {{- include "coffeelovers.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: auth-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: {{ include "coffeelovers.image" (dict "registry" .Values.global.image.registry "repository" $svc.image.repository "tag" .Values.global.image.tag) }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ $svc.port }}
+          env:
+            {{- toYaml $svc.env | nindent 12 }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "coffeelovers.postgresSecretName" . }}
+                  key: password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ $svc.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ $svc.port }}
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            {{- toYaml $svc.resources | nindent 12 }}
+{{- end }}
