@@ -93,3 +93,210 @@ jobs:
       - name: Validate docker-compose config
         run: docker compose -f infra/docker-compose.yml config
         # Validates root docker-compose.yml if Docker is available on the runner
+      
+      - name: Build GenAI Docker image
+        run: docker build -t genai-service:test genai/
+        continue-on-error: true
+
+      - name: Build backend Docker image
+        run: docker build -t backend-service:test backend/
+        continue-on-error: true
+  
+  terraform-validate:
+    name: Terraform - Validate & Plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.0
+
+      - name: Terraform Format Check
+        working-directory: infra/terraform
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        working-directory: infra/terraform
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        working-directory: infra/terraform
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: infra/terraform
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: terraform plan -var-file="terraform.tfvars" -out=tfplan
+        continue-on-error: true
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: infra/terraform/tfplan
+        continue-on-error: true
+
+  ansible-validate:
+    name: Ansible - Validate & Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible>=2.12.0 ansible-lint
+
+      - name: Ansible Lint
+        working-directory: infra/ansible
+        run: ansible-lint site.yml
+        continue-on-error: true
+
+      - name: Ansible Syntax Check
+        working-directory: infra/ansible
+        run: ansible-playbook -i inventory.ini site.yml --syntax-check
+
+      - name: Validate Inventory
+        working-directory: infra/ansible
+        run: ansible-inventory -i inventory.ini --list --yaml
+        continue-on-error: true
+
+  deploy-to-azure:
+    name: Deploy GenAI to Azure VM
+    runs-on: ubuntu-latest
+    needs: [frontend-check, backend-check, genai-check, docker-check, terraform-validate, ansible-validate]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: http://${{ secrets.AZURE_VM_IP }}:8001
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible>=2.12.0
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.AZURE_VM_IP }} >> ~/.ssh/known_hosts
+
+      - name: Terraform Apply
+        working-directory: infra/terraform
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          terraform init -backend=false
+          terraform apply -var-file="terraform.tfvars" -auto-approve
+
+      - name: Deploy Full Stack with Ansible
+        working-directory: infra/ansible
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ANSIBLE_HOST_KEY_CHECKING: false
+        run: |
+          ansible-playbook -i inventory.ini site.yml \
+            -e "ansible_user=azureuser" \
+            -e "ansible_ssh_private_key_file=~/.ssh/id_rsa" \
+            -v
+
+      - name: Verify All Services Health
+        run: |
+          VM_IP=${{ secrets.AZURE_VM_IP }}
+          
+          echo "Checking PostgreSQL (5432)..."
+          for i in {1..30}; do
+            if timeout 2 bash -c "echo > /dev/tcp/$VM_IP/5432" 2>/dev/null; then
+              echo "✅ PostgreSQL is running"
+              break
+            fi
+            [ $i -eq 30 ] && echo "❌ PostgreSQL failed" && exit 1
+            sleep 5
+          done
+          
+          echo "Checking GenAI Service (8001)..."
+          for i in {1..30}; do
+            if curl -f http://$VM_IP:8001/health 2>/dev/null; then
+              echo "✅ GenAI service is healthy"
+              break
+            fi
+            [ $i -eq 30 ] && echo "❌ GenAI service failed" && exit 1
+            sleep 5
+          done
+          
+          echo "Checking Backend API (8081)..."
+          for i in {1..30}; do
+            if timeout 2 bash -c "echo > /dev/tcp/$VM_IP/8081" 2>/dev/null; then
+              echo "✅ Backend API is running"
+              break
+            fi
+            [ $i -eq 30 ] && echo "❌ Backend API failed" && exit 1
+            sleep 5
+          done
+          
+          echo "Checking React Client (3000)..."
+          for i in {1..30}; do
+            if timeout 2 bash -c "echo > /dev/tcp/$VM_IP/3000" 2>/dev/null; then
+              echo "✅ React Client is running"
+              break
+            fi
+            [ $i -eq 30 ] && echo "❌ React Client failed" && exit 1
+            sleep 5
+          done
+          
+          echo "✅ All services are healthy!"
+
+      - name: Post Deployment Summary
+        if: success()
+        run: |
+          echo "## ✅ Full Stack Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Services:" >> $GITHUB_STEP_SUMMARY
+          echo "- **PostgreSQL**: postgresql://coffeelovers@${{ secrets.AZURE_VM_IP }}:5432/coffeelovers" >> $GITHUB_STEP_SUMMARY
+          echo "- **GenAI Service**: http://${{ secrets.AZURE_VM_IP }}:8001" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend API**: http://${{ secrets.AZURE_VM_IP }}:8081" >> $GITHUB_STEP_SUMMARY
+          echo "- **React Client**: http://${{ secrets.AZURE_VM_IP }}:3000" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick Links:" >> $GITHUB_STEP_SUMMARY
+          echo "- [Web UI](http://${{ secrets.AZURE_VM_IP }}:3000)" >> $GITHUB_STEP_SUMMARY
+          echo "- [GenAI Health](http://${{ secrets.AZURE_VM_IP }}:8001/health)" >> $GITHUB_STEP_SUMMARY
+          echo "- [API Docs](http://${{ secrets.AZURE_VM_IP }}:8081/swagger-ui.html)" >> $GITHUB_STEP_SUMMARY
