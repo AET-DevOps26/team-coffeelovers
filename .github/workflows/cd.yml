@@ -76,7 +76,7 @@ jobs:
       - name: Deploy with Helm
         run: |
           helm upgrade --install coffeelovers ./infra/helm/coffeelovers \
-            --namespace team-coffeelovers \
+            --namespace team-coffeelovers-devops26 \
             --create-namespace \
             --set secrets.postgresPassword=${{ secrets.POSTGRES_PASSWORD }} \
             --set secrets.openaiApiKey=${{ secrets.OPENAI_API_KEY }} \
