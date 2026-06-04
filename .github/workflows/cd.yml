@@ -82,5 +82,6 @@ jobs:
             --create-namespace \
             --set secrets.postgresPassword=${{ secrets.POSTGRES_PASSWORD }} \
             --set secrets.openaiApiKey=${{ secrets.OPENAI_API_KEY }} \
+            --set secrets.jwtSecret=${{ secrets.JWT_SECRET }} \
             --set global.image.tag=latest \
             --wait --timeout 5m
