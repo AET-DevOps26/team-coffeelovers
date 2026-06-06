@@ -1,9 +1,8 @@
 # Infrastructure Automation
 
-This repository now includes Terraform for working against the existing Azure environment and Ansible for VM configuration and application deployment.
+This repository now includes Terraform for working against an existing Azure environment and Ansible for VM configuration and application deployment.
 
-The current setup targets the existing Azure resource group `devops`, virtual network `devops-vnet`, subnet `default`, network interface `devops225_z1`, VM `devops`, and public IP `172.160.248.100`.
-
+Update the resource names and VM public IP in `infra/terraform/terraform.tfvars` and `infra/ansible/inventory.ini` to match your target Azure environment.
 ## What Terraform Reads
 
 Terraform reads the existing Azure resources needed for deployment:
