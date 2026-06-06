@@ -16,6 +16,7 @@ spec:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
+          {{- if .Values.services.client.enabled }}
           - path: {{ .Values.ingress.paths.frontend }}
             pathType: Prefix
             backend:
@@ -23,6 +24,7 @@ spec:
                 name: client
                 port:
                   number: {{ .Values.services.client.port }}
+          {{- end }}
           {{- if (index .Values.services "auth-service").enabled }}
           - path: {{ .Values.ingress.paths.auth }}
             pathType: Prefix

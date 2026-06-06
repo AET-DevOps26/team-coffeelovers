@@ -9,7 +9,10 @@ Once the ingress controller is ready, the app is available at:
 Frontend:
   https://{{ .Values.ingress.host }}{{ .Values.ingress.paths.frontend }}
 
-Auth API:
+Auth endpoints:
+  https://{{ .Values.ingress.host }}{{ .Values.ingress.paths.auth }}
+
+Backend API:
   https://{{ .Values.ingress.host }}{{ .Values.ingress.paths.api }}
 
 Check ingress:
