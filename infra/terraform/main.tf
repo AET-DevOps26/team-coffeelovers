@@ -18,7 +18,7 @@ data "azurerm_network_interface" "this" {
   resource_group_name = data.azurerm_resource_group.this.name
 }
 
-data "azurerm_linux_virtual_machine" "this" {
+data "azurerm_virtual_machine" "this" {
   name                = var.vm_name
-  resource_group_name = data.azurerm_resource_group.this.name
+  resource_group_name = var.resource_group_name
 }

@@ -20,12 +20,12 @@ output "network_interface_name" {
 
 output "vm_name" {
   description = "Existing VM name"
-  value       = data.azurerm_linux_virtual_machine.this.name
+  value       = data.azurerm_virtual_machine.this.name
 }
 
 output "vm_id" {
   description = "VM resource ID"
-  value       = data.azurerm_linux_virtual_machine.this.id
+  value       = data.azurerm_virtual_machine.this.id
 }
 
 output "public_ip_address" {
