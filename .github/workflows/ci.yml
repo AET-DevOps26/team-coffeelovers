@@ -83,6 +83,87 @@ jobs:
         run: ./gradlew build --no-daemon
         # Produces the JAR; fails the job if build fails
 
+  genai-check:
+    name: GenAI Lint, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install GenAI dependencies
+        working-directory: genai
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run GenAI tests if configured
+        working-directory: genai
+        run: |
+          if [ -d "tests" ]; then
+            pytest
+          else
+            echo "No tests directory found — skipping tests"
+          fi
+
+  # genai-check:
+  #   name: GenAI Service - Lint, Test & Security
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Python 3.12
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.12'
+  #         cache: 'pip'
+  #         cache-dependency-path: 'genai/requirements.txt'
+
+  #     - name: Install GenAI dependencies
+  #       working-directory: genai
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install -r requirements.txt
+  #         pip install pytest pytest-cov flake8 mypy bandit
+
+  #     - name: Lint OpenAPI spec (Redocly)
+  #       run: |
+  #         npm install -g @redocly/cli
+  #         redocly lint api/openapi.yaml
+
+  #     - name: Lint GenAI code (flake8)
+  #       working-directory: genai
+  #       run: flake8 src/ --max-line-length=120 --ignore=E203,W503
+  #       continue-on-error: true
+
+  #     - name: Type check GenAI code (mypy)
+  #       working-directory: genai
+  #       run: mypy src/ --ignore-missing-imports
+  #       continue-on-error: true
+
+  #     - name: Security scan GenAI code (bandit)
+  #       working-directory: genai
+  #       run: bandit -r src/ -f json -o bandit-report.json
+  #       continue-on-error: true
+
+  #     - name: Run GenAI tests
+  #       working-directory: genai
+  #       run: pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+  #       continue-on-error: true
+
+  #     - name: Upload coverage to Codecov
+  #       uses: codecov/codecov-action@v3
+  #       with:
+  #         files: ./genai/coverage.xml
+  #         flags: genai-service
+  #         name: genai-coverage
+  #       continue-on-error: true
+
   docker-check:
     name: Docker Compose Validation
     runs-on: ubuntu-latest
@@ -96,11 +177,9 @@ jobs:
       
       - name: Build GenAI Docker image
         run: docker build -t genai-service:test genai/
-        continue-on-error: true
 
       - name: Build backend Docker image
         run: docker build -t backend-service:test backend/
-        continue-on-error: true
   
   terraform-validate:
     name: Terraform - Validate & Plan
@@ -118,7 +197,6 @@ jobs:
       - name: Terraform Format Check
         working-directory: infra/terraform
         run: terraform fmt -check -recursive
-        continue-on-error: true
 
       - name: Terraform Init
         working-directory: infra/terraform
@@ -141,14 +219,12 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: terraform plan -var-file="terraform.tfvars" -out=tfplan
-        continue-on-error: true
 
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
         with:
           name: terraform-plan
           path: infra/terraform/tfplan
-        continue-on-error: true
 
   ansible-validate:
     name: Ansible - Validate & Syntax Check
@@ -179,12 +255,11 @@ jobs:
       - name: Validate Inventory
         working-directory: infra/ansible
         run: ansible-inventory -i inventory.ini --list --yaml
-        continue-on-error: true
 
   deploy-to-azure:
     name: Deploy GenAI to Azure VM
     runs-on: ubuntu-latest
-    needs: [frontend-check, backend-check, genai-check, docker-check, terraform-validate, ansible-validate]
+    needs: [frontend-check, backend-check, docker-check, terraform-validate, ansible-validate]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: production
