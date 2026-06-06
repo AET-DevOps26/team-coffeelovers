@@ -18,10 +18,10 @@ Backend API:
 Check ingress:
   kubectl get ingress -n {{ .Release.Namespace }}
 
-To upgrade after a new image is pushed:
+To upgrade after a new image is pushed (reuse existing values/secrets):
   helm upgrade coffeelovers ./infra/helm/coffeelovers \
     --namespace {{ .Release.Namespace }} \
-    --set secrets.postgresPassword=<password>
+    --reuse-values
 
 To uninstall:
   helm uninstall coffeelovers --namespace {{ .Release.Namespace }}
