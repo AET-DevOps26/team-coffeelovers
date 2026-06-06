@@ -180,6 +180,9 @@ jobs:
 
       - name: Build backend Docker image
         run: docker build -t auth-service:test -f backend/auth-service/Dockerfile backend/
+      
+      - name: Build frontend Docker image
+        run: docker build -t frontend-service:test -f frontend/Dockerfile frontend/
   
   terraform-validate:
     name: Terraform - Validate & Plan
