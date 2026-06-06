@@ -23,7 +23,7 @@ The goal of this project is to make travel planning faster, easier, and more pra
 - [Launch the System](docs/how-to-launch.md)
 - [Infrastructure Automation](docs/infrastructure-automation.md)
 
-The infrastructure automation docs are written for the existing Azure environment: resource group `devops`, virtual network `devops-vnet`, subnet `default`, network interface `devops225_z1`, VM `devops`, and public IP `172.160.248.100`.
+The infrastructure automation docs assume you will provide your own Azure resource names and VM IP (via `infra/terraform/terraform.tfvars` and the Ansible inventory).
 
 ## Repository Structure
 
