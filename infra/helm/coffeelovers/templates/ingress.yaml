@@ -23,6 +23,14 @@ spec:
                 name: client
                 port:
                   number: {{ .Values.services.client.port }}
+          {{- if (index .Values.services "auth-service").enabled }}
+          - path: {{ .Values.ingress.paths.auth }}
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: {{ (index .Values.services "auth-service").port }}
           - path: {{ .Values.ingress.paths.api }}
             pathType: Prefix
             backend:
@@ -30,6 +38,7 @@ spec:
                 name: auth-service
                 port:
                   number: {{ (index .Values.services "auth-service").port }}
+          {{- end }}
           {{- if (index .Values.services "genai-service").enabled }}
           - path: {{ .Values.ingress.paths.genai }}
             pathType: Prefix

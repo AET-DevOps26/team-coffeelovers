@@ -34,7 +34,8 @@ ingress:
   secretName: coffeelovers-tls
   paths:
     frontend: /
-    api: /auth
+    auth: /auth
+    api: /api
     genai: /genai
 
 services:
