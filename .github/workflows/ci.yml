@@ -182,7 +182,7 @@ jobs:
         run: docker build -t auth-service:test -f backend/auth-service/Dockerfile backend/
       
       - name: Build frontend Docker image
-        run: docker build -t frontend-service:test -f frontend/Dockerfile frontend/
+        run: docker build -t client-service:test -f client/Dockerfile client/
   
   terraform-validate:
     name: Terraform - Validate & Plan
@@ -213,6 +213,29 @@ jobs:
       - name: Terraform Validate
         working-directory: infra/terraform
         run: terraform validate
+
+      - name: Create Terraform variables file
+        working-directory: infra/terraform
+        run: |
+          cat > terraform.tfvars <<EOF
+          subscription_id = "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          resource_group_name = "devops"
+          virtual_network_name = "devops-vnet"
+          subnet_name = "default"
+          network_interface_name = "devops225_z1"
+          vm_name = "devops"
+          admin_username = "azureuser"
+          public_ip_address = "${{ secrets.AZURE_VM_IP }}"
+          location = "swedencentral"
+          environment = "prod"
+
+          tags = {
+            Project     = "AI-Travel-Planner"
+            Environment = "Production"
+            ManagedBy   = "Terraform"
+            Owner       = "DevOps-Team"
+          }
+          EOF
 
       - name: Terraform Plan
         working-directory: infra/terraform
