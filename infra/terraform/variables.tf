@@ -40,9 +40,8 @@ variable "admin_username" {
 }
 
 variable "public_ip_address" {
-  description = "Existing public IP address of the VM"
+  description = "Public IP address of the VM"
   type        = string
-  default     = "172.160.248.100"
 }
 
 variable "location" {
