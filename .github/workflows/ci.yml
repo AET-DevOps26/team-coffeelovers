@@ -179,7 +179,7 @@ jobs:
         run: docker build -t genai-service:test genai/
 
       - name: Build backend Docker image
-        run: docker build -t backend-service:test backend/
+        run: docker build -t auth-service:test -f backend/auth-service/Dockerfile backend/
   
   terraform-validate:
     name: Terraform - Validate & Plan
