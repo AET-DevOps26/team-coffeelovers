@@ -1,0 +1,90 @@
+global:
+  image:
+    registry: ghcr.io/aet-devops26/team-coffeelovers
+    tag: latest
+
+# Secrets must be supplied at deploy time — never commit real values here.
+# Local dev:  helm install --set secrets.postgresPassword=localdev --set secrets.openaiApiKey=sk-... coffeelovers .
+# CI/CD:      passed automatically via GitHub Actions secrets
+secrets:
+  postgresPassword: ""
+  openaiApiKey: ""
+  jwtSecret: ""
+
+postgres:
+  image: postgres:16-alpine
+  port: 5432
+  user: coffeelovers
+  database: coffeelovers
+  persistence:
+    size: 5Gi
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+ingress:
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  host: team-coffeelovers-devops26.stud.k8s.aet.cit.tum.de
+  secretName: coffeelovers-tls
+  paths:
+    frontend: /
+    auth: /auth
+    api: /api
+    genai: /genai
+
+services:
+  client:
+    enabled: true
+    port: 3000
+    image:
+      repository: client
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 256Mi
+        cpu: 300m
+
+  auth-service:
+    enabled: true
+    port: 8081
+    image:
+      repository: auth-service
+    env:
+      - name: SPRING_PROFILES_ACTIVE
+        value: docker
+      - name: SPRING_DATASOURCE_URL
+        value: "jdbc:postgresql://postgres:5432/coffeelovers"
+      - name: SPRING_DATASOURCE_USERNAME
+        value: coffeelovers
+      - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - name: SERVER_PORT
+        value: "8081"
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+  genai-service:
+    enabled: true
+    port: 8001
+    image:
+      repository: genai-service
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m

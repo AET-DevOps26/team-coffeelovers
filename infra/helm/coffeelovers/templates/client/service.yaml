@@ -1,0 +1,17 @@
+{{- $svc := .Values.services.client }}
+{{- if $svc.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: client
+  labels:
+    app.kubernetes.io/name: client
+    {{- include "coffeelovers.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
+  selector:
+    app.kubernetes.io/name: client
+{{- end }}
