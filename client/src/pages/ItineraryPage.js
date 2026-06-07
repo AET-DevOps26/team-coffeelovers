@@ -73,6 +73,34 @@ const MOCK_ITINERARY = {
 };
 
 // ---------------------------------------------------------------------------
+const PERIOD_START_MINUTES = { MORNING: 9 * 60, AFTERNOON: 13 * 60, EVENING: 18 * 60 };
+
+function parseDurationMinutes(duration) {
+  const match = /(\d+(?:\.\d+)?)/.exec(duration);
+  return match ? Math.round(Number.parseFloat(match[1]) * 60) : 60;
+}
+
+function formatTime(totalMinutes) {
+  const hours24 = Math.floor(totalMinutes / 60) % 24;
+  const minutes = totalMinutes % 60;
+  const suffix = hours24 < 12 ? "AM" : "PM";
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+  return `${hours12}:${String(minutes).padStart(2, "0")} ${suffix}`;
+}
+
+// Optimistic client-side preview: activities are grouped by period in array
+// order, and each one's displayed time is derived from its period's start
+// time plus the cumulative duration of the activities scheduled before it.
+// The Planning Service will own the authoritative recalculation once it persists itineraries.
+function recalculateTimes(activities) {
+  const cursor = { ...PERIOD_START_MINUTES };
+  return activities.map(activity => {
+    const start = cursor[activity.period];
+    cursor[activity.period] = start + parseDurationMinutes(activity.duration);
+    return { ...activity, time: formatTime(start) };
+  });
+}
+
 const DEFAULT_CENTER = [41.3851, 2.1734]; // Barcelona fallback
 
 export default function ItineraryPage() {
@@ -94,6 +122,7 @@ export default function ItineraryPage() {
   const preference  = searchParams.get("preference")  || location.state?.preference || "popular";
   const preferenceLabel = PREFERENCE_LABELS[preference] || preference;
 
+  const [itinerary, setItinerary] = useState(MOCK_ITINERARY);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [mapZoom] = useState(13);
   const [toast, setToast] = useState(null);
@@ -105,11 +134,53 @@ export default function ItineraryPage() {
     setTimeout(() => setToast(null), 2500);
   };
 
+  const handleRemoveActivity = (dayIndex, activityId) => {
+    setItinerary(prev => ({
+      ...prev,
+      days: prev.days.map((day, i) => i !== dayIndex
+        ? day
+        : { ...day, activities: day.activities.filter(a => a.id !== activityId) }
+      ),
+    }));
+    showToast("Activity removed");
+  };
+
+  const handleMoveActivity = (sourceDayIndex, sourceActivityId, targetDayIndex, targetActivityId) => {
+    if (sourceDayIndex === targetDayIndex && sourceActivityId === targetActivityId) return;
+    setItinerary(prev => {
+      const sourceDay = prev.days[sourceDayIndex];
+      const targetDay = prev.days[targetDayIndex];
+      const dragged = sourceDay?.activities.find(a => a.id === sourceActivityId);
+      const target = targetDay?.activities.find(a => a.id === targetActivityId);
+      if (!dragged || !target) return prev;
+
+      const moved = dragged.period === target.period ? dragged : { ...dragged, period: target.period };
+
+      let sourceActivities = sourceDay.activities.filter(a => a.id !== sourceActivityId);
+      let targetActivities = sourceDayIndex === targetDayIndex ? sourceActivities : [...targetDay.activities];
+      const toIdx = targetActivities.findIndex(a => a.id === targetActivityId);
+      targetActivities.splice(toIdx, 0, moved);
+
+      sourceActivities = recalculateTimes(sourceActivities);
+      targetActivities = sourceDayIndex === targetDayIndex ? sourceActivities : recalculateTimes(targetActivities);
+
+      return {
+        ...prev,
+        days: prev.days.map((day, i) => {
+          if (i === sourceDayIndex && i === targetDayIndex) return { ...day, activities: targetActivities };
+          if (i === sourceDayIndex) return { ...day, activities: sourceActivities };
+          if (i === targetDayIndex) return { ...day, activities: targetActivities };
+          return day;
+        }),
+      };
+    });
+  };
+
   const handleSave = () => {
     const token = localStorage.getItem("token");
     if (!token) { navigate("/login"); return; }
     const saved = JSON.parse(localStorage.getItem("savedPlans") || "[]");
-    const plan = { id: Date.now(), destination, startDate, endDate, preference, createdAt: new Date().toISOString().slice(0,10), itinerary: MOCK_ITINERARY };
+    const plan = { id: Date.now(), destination, startDate, endDate, preference, createdAt: new Date().toISOString().slice(0,10), itinerary };
     const already = saved.findIndex(p => p.destination === destination && p.startDate === startDate && p.endDate === endDate);
     if (already === -1) saved.unshift(plan); else saved[already] = plan;
     localStorage.setItem("savedPlans", JSON.stringify(saved));
@@ -273,48 +344,107 @@ export default function ItineraryPage() {
         </div>
 
         {/* ── Days ── */}
-        {MOCK_ITINERARY.days.map(day => (
-          <div key={day.day} style={{ marginBottom: 32 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111827", marginBottom: 16 }}>
-              Day {day.day}: {day.title}
-            </h2>
-
-            {["MORNING", "AFTERNOON", "EVENING"].map(period => {
-              const acts = day.activities.filter(a => a.period === period);
-              if (!acts.length) return null;
-              return (
-                <div key={period} style={{ marginBottom: 16 }}>
-                  <p style={periodLabel}>{period}</p>
-                  <div style={sectionCard}>
-                    {acts.map((act, i) => (
-                      <div key={act.id}>
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "14px 0" }}>
-                          <div style={clockIcon}>🕐</div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                              <div>
-                                <p style={{ fontWeight: 700, fontSize: 15, color: "#111827", margin: "0 0 4px" }}>{act.name}</p>
-                                <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 6px", lineHeight: 1.5 }}>{act.description}</p>
-                                <span style={durationBadge}>{act.duration}</span>
-                              </div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginLeft: 16 }}>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{act.time}</span>
-                                <button style={iconBtn} title="Suggest alternative">↺</button>
-                                <button style={iconBtn} title="Remove">🗑</button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        {i < acts.length - 1 && <hr style={{ border: "none", borderTop: "1px solid #f3f4f6", margin: 0 }} />}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {itinerary.days.map((day, dayIndex) => (
+          <DayCard
+            key={day.day}
+            day={day}
+            dayIndex={dayIndex}
+            onMoveActivity={handleMoveActivity}
+            onRemoveActivity={handleRemoveActivity}
+          />
         ))}
       </div>
+    </div>
+  );
+}
+
+function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity }) {
+  const [draggedId, setDraggedId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111827", marginBottom: 16 }}>
+        Day {day.day}: {day.title}
+      </h2>
+
+      {["MORNING", "AFTERNOON", "EVENING"].map(period => {
+        const acts = day.activities.filter(a => a.period === period);
+        if (!acts.length) return null;
+        return (
+          <div key={period} style={{ marginBottom: 16 }}>
+            <p style={periodLabel}>{period}</p>
+            <div style={sectionCard}>
+              {acts.map((act, i) => (
+                <ActivityRow
+                  key={act.id}
+                  activity={act}
+                  showDivider={i < acts.length - 1}
+                  isDragging={draggedId === act.id}
+                  isDragOver={dragOverId === act.id && draggedId !== act.id}
+                  onDragStart={e => {
+                    e.dataTransfer.setData("text/plain", JSON.stringify({ dayIndex, id: act.id }));
+                    e.dataTransfer.effectAllowed = "move";
+                    // Defer the opacity change so the browser snapshots the
+                    // drag preview before the dragged row fades out — doing
+                    // it synchronously causes a ghosted/overlapping preview.
+                    setTimeout(() => setDraggedId(act.id), 0);
+                  }}
+                  onDragEnd={() => { setDraggedId(null); setDragOverId(null); }}
+                  onDragOver={() => { if (dragOverId !== act.id) setDragOverId(act.id); }}
+                  onDrop={e => {
+                    let source;
+                    try { source = JSON.parse(e.dataTransfer.getData("text/plain")); } catch { /* ignore */ }
+                    if (source && Number.isInteger(source.dayIndex) && source.id !== act.id) {
+                      onMoveActivity(source.dayIndex, source.id, dayIndex, act.id);
+                    }
+                    setDraggedId(null);
+                    setDragOverId(null);
+                  }}
+                  onRemove={() => onRemoveActivity(dayIndex, act.id)}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ActivityRow({ activity, showDivider, isDragging, isDragOver, onDragStart, onDragEnd, onDragOver, onDrop, onRemove }) {
+  return (
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={e => { e.preventDefault(); onDragOver(); }}
+      onDrop={e => { e.preventDefault(); onDrop(e); }}
+      style={{
+        opacity: isDragging ? 0.4 : 1,
+        borderTop: isDragOver ? "2px solid #2563eb" : "2px solid transparent",
+        transition: "opacity 0.15s, border-color 0.1s",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "14px 0" }}>
+        <div style={dragHandle} title="Drag to reorder">⠿</div>
+        <div style={clockIcon}>🕐</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <p style={{ fontWeight: 700, fontSize: 15, color: "#111827", margin: "0 0 4px" }}>{activity.name}</p>
+              <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 6px", lineHeight: 1.5 }}>{activity.description}</p>
+              <span style={durationBadge}>{activity.duration}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginLeft: 16 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{activity.time}</span>
+              <button style={iconBtn} title="Suggest alternative">↺</button>
+              <button onClick={onRemove} style={iconBtn} title="Remove">🗑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {showDivider && <hr style={{ border: "none", borderTop: "1px solid #f3f4f6", margin: 0 }} />}
     </div>
   );
 }
@@ -325,4 +455,5 @@ const periodLabel   = { fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", 
 const clockIcon     = { width: 36, height: 36, background: "#f9fafb", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 };
 const durationBadge = { fontSize: 11, fontWeight: 600, color: "#f97316", background: "#fff7ed", padding: "2px 8px", borderRadius: 20 };
 const iconBtn       = { background: "none", border: "none", cursor: "pointer", fontSize: 15, color: "#9ca3af", padding: 2 };
+const dragHandle    = { fontSize: 18, lineHeight: "36px", color: "#cbd5e1", cursor: "grab", flexShrink: 0, userSelect: "none" };
 const headerBtnStyle = { background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 8, color: "white", padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" };

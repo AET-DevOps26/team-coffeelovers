@@ -91,6 +91,14 @@ function RegisterPage() {
                 className="auth-input"
               />
             </div>
+            {password.length > 0 && (
+              <p style={{
+                ...requirementStyle,
+                color: password.length >= 6 ? "#16a34a" : "#dc2626",
+              }}>
+                {password.length >= 6 ? "✓" : "✗"} At least 6 characters
+              </p>
+            )}
           </div>
 
           <div style={fieldStyle}>
@@ -200,6 +208,7 @@ const switchStyle = { fontSize: 13, color: "#6b7280", margin: "20px 0 8px" };
 const linkStyle   = { color: "#1e293b", fontWeight: 700, textDecoration: "underline" };
 const backStyle   = { fontSize: 13, color: "#9ca3af", textDecoration: "none" };
 const errorStyle  = { color: "#dc2626", fontSize: 13, marginBottom: 8, textAlign: "center" };
+const requirementStyle = { fontSize: 12, marginTop: 6, marginBottom: 0 };
 const decoStyle   = { position: "absolute", userSelect: "none", pointerEvents: "none", opacity: 0.7 };
 
 export default RegisterPage;
