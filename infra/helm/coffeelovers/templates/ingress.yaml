@@ -1,0 +1,52 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: coffeelovers
+  labels:
+    {{- include "coffeelovers.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: {{ .Values.ingress.secretName }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          {{- if .Values.services.client.enabled }}
+          - path: {{ .Values.ingress.paths.frontend }}
+            pathType: Prefix
+            backend:
+              service:
+                name: client
+                port:
+                  number: {{ .Values.services.client.port }}
+          {{- end }}
+          {{- if (index .Values.services "auth-service").enabled }}
+          - path: {{ .Values.ingress.paths.auth }}
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: {{ (index .Values.services "auth-service").port }}
+          - path: {{ .Values.ingress.paths.api }}
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: {{ (index .Values.services "auth-service").port }}
+          {{- end }}
+          {{- if (index .Values.services "genai-service").enabled }}
+          - path: {{ .Values.ingress.paths.genai }}
+            pathType: Prefix
+            backend:
+              service:
+                name: genai-service
+                port:
+                  number: {{ (index .Values.services "genai-service").port }}
+          {{- end }}
