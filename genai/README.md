@@ -131,7 +131,7 @@ http://genai:8001/genai
 From the local browser, the service is available at:
 
 ```txt
-http://localhost:8001/genai
+http://localhost:8001/genai/
 ```
 
 ## Verification Commands
