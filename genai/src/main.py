@@ -3,7 +3,7 @@ Initial GenAI service entry point.
 """
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 
 app = FastAPI(
     title="AI Travel Planner - GenAI Service",
@@ -11,8 +11,10 @@ app = FastAPI(
     version="0.1.0",
 )
 
+router = APIRouter(prefix="/genai")
 
-@app.get("/")
+
+@router.get("/")
 async def root():
     """Root endpoint for basic service information."""
     return {
@@ -21,12 +23,15 @@ async def root():
     }
 
 
-@app.get("/health")
+@router.get("/health")
 async def health_check():
     """Health check endpoint."""
     return {
         "status": "ok",
     }
+
+
+app.include_router(router)
 
 
 if __name__ == "__main__":
