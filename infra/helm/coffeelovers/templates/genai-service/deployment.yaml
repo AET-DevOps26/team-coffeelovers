@@ -33,13 +33,13 @@ spec:
                   key: openai-api-key
           readinessProbe:
             httpGet:
-              path: /health
+              path: /genai/health
               port: {{ $svc.port }}
             initialDelaySeconds: 15
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /health
+              path: /genai/health
               port: {{ $svc.port }}
             initialDelaySeconds: 30
             periodSeconds: 15
