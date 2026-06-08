@@ -125,7 +125,7 @@ The service does not currently require `depends_on` because it does not depend o
 Inside the Docker Compose network, other services can reach the GenAI service with:
 
 ```txt
-http://genai:8001/genai
+http://genai:8001/genai/
 ```
 
 From the local browser, the service is available at:
