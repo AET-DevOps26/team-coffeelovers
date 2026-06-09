@@ -43,7 +43,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         List<String> origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
+                .filter(s -> !s.isBlank())
                 .toList();
+        if (origins.isEmpty()) {
+            throw new IllegalStateException("cors.allowed-origins must contain at least one origin");
+        }
 
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(origins);
