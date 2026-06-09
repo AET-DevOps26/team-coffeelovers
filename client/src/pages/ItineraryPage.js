@@ -137,10 +137,11 @@ export default function ItineraryPage() {
   const handleRemoveActivity = (dayIndex, activityId) => {
     setItinerary(prev => ({
       ...prev,
-      days: prev.days.map((day, i) => i !== dayIndex
-        ? day
-        : { ...day, activities: day.activities.filter(a => a.id !== activityId) }
-      ),
+      days: prev.days.map((day, i) => {
+        if (i !== dayIndex) return day;
+        const nextActivities = recalculateTimes(day.activities.filter(a => a.id !== activityId));
+        return { ...day, activities: nextActivities };
+      }),
     }));
     showToast("Activity removed");
   };
