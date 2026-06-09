@@ -41,14 +41,14 @@ spec:
                   key: jwt-secret
           readinessProbe:
             httpGet:
-              path: /actuator/health
+              path: /auth/actuator/health
               port: {{ $svc.port }}
             initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 5
           livenessProbe:
             httpGet:
-              path: /actuator/health
+              path: /auth/actuator/health
               port: {{ $svc.port }}
             initialDelaySeconds: 60
             periodSeconds: 15
