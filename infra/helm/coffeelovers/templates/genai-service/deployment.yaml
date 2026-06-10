@@ -1,0 +1,48 @@
+{{- $svc := index .Values.services "genai-service" }}
+{{- if $svc.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: genai-service
+  labels:
+    app.kubernetes.io/name: genai-service
+    {{- include "coffeelovers.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: genai-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: genai-service
+    spec:
+      containers:
+        - name: genai-service
+          image: {{ include "coffeelovers.image" (dict "registry" .Values.global.image.registry "repository" $svc.image.repository "tag" .Values.global.image.tag) }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ $svc.port }}
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: genai-credentials
+                  key: openai-api-key
+          readinessProbe:
+            httpGet:
+              path: /genai/health
+              port: {{ $svc.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /genai/health
+              port: {{ $svc.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            {{- toYaml $svc.resources | nindent 12 }}
+{{- end }}

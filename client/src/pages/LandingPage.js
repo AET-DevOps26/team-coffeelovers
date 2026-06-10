@@ -53,6 +53,12 @@ function LandingPage() {
   const [endDate, setEndDate] = useState("");
   const [preference, setPreference] = useState("popular");
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/";
+  };
 
   return (
     <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", minHeight: "100vh" }}>
@@ -105,13 +111,25 @@ function LandingPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
             <Link to="/plans" style={navLinkStyle}>Plan Trip</Link>
             <Link to="/plans" style={navLinkStyle}>My Plans</Link>
-            <Link to="/login" style={{
-              ...navLinkStyle,
-              background: "#c0622a",
-              padding: "8px 20px",
-              borderRadius: 8,
-              fontWeight: 700,
-            }}>Login</Link>
+            {token ? (
+              <button onClick={handleLogout} style={{
+                ...navLinkStyle,
+                background: "#c0622a",
+                padding: "8px 20px",
+                borderRadius: 8,
+                fontWeight: 700,
+                border: "none",
+                cursor: "pointer",
+              }}>Logout</button>
+            ) : (
+              <Link to="/login" style={{
+                ...navLinkStyle,
+                background: "#c0622a",
+                padding: "8px 20px",
+                borderRadius: 8,
+                fontWeight: 700,
+              }}>Login</Link>
+            )}
           </div>
         </nav>
 

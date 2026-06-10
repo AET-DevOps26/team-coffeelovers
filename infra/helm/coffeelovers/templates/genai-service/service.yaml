@@ -1,0 +1,17 @@
+{{- $svc := index .Values.services "genai-service" }}
+{{- if $svc.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: genai-service
+  labels:
+    app.kubernetes.io/name: genai-service
+    {{- include "coffeelovers.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
+  selector:
+    app.kubernetes.io/name: genai-service
+{{- end }}

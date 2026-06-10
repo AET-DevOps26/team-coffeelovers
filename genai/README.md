@@ -57,9 +57,9 @@ http://127.0.0.1:8001
 
 | Method | Endpoint  | Description                         |
 | ------ | --------- | ----------------------------------- |
-| GET    | `/`       | Returns basic service information   |
-| GET    | `/health` | Returns service health status       |
-| GET    | `/docs`   | Opens FastAPI Swagger documentation |
+| GET    | `/genai/`       | Returns basic service information   |
+| GET    | `/genai/health` | Returns service health status       |
+| GET    | `/docs`         | Opens FastAPI Swagger documentation |
 
 ## Docker Usage
 
@@ -79,8 +79,8 @@ docker run --rm -p 8001:8001 genai-service
 Then open:
 
 ```txt
-http://127.0.0.1:8001
-http://127.0.0.1:8001/health
+http://127.0.0.1:8001/genai/
+http://127.0.0.1:8001/genai/health
 ```
 
 ## Environment Variables
@@ -125,13 +125,13 @@ The service does not currently require `depends_on` because it does not depend o
 Inside the Docker Compose network, other services can reach the GenAI service with:
 
 ```txt
-http://genai:8001
+http://genai:8001/genai/
 ```
 
 From the local browser, the service is available at:
 
 ```txt
-http://localhost:8001
+http://localhost:8001/genai/
 ```
 
 ## Verification Commands
@@ -156,6 +156,6 @@ docker run --rm -p 8001:8001 genai-service
 
 Test endpoints:
 
-http://127.0.0.1:8001/
-http://127.0.0.1:8001/health
+http://127.0.0.1:8001/genai/
+http://127.0.0.1:8001/genai/health
 http://127.0.0.1:8001/docs

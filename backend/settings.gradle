@@ -3,3 +3,4 @@ rootProject.name = 'backend'
 
 include 'common'
 include 'auth-service'
+include 'trip-service'
