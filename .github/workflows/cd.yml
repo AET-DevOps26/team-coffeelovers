@@ -93,7 +93,6 @@ jobs:
 
     environment:
       name: kubernetes-production
-      url: https://team-coffeelovers-devops26.stud.k8s.aet.cit.tum.de
 
     steps:
       - name: Checkout
@@ -134,7 +133,6 @@ jobs:
 
     environment:
       name: azure-vm-production
-      url: http://${{ secrets.AZURE_VM_IP }}:3000
 
     steps:
       - name: Checkout repository
