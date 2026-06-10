@@ -62,4 +62,3 @@
       args:
         chdir: "{{ app_path }}"
       changed_when: false
-
