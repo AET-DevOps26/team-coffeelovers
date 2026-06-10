@@ -30,6 +30,7 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SERVER_PORT=8081
       - JWT_SECRET=${JWT_SECRET:-coffeelovers-local-dev-jwt-secret}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,10 +40,10 @@ services:
     build:
       context: ../client
       dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8081}
     ports:
       - "3000:3000"
-    environment:
-      - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:8081}
     depends_on:
       - auth-service
     restart: unless-stopped
