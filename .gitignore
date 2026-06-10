@@ -87,8 +87,8 @@ infra/terraform/.terraform/
 infra/terraform/*.tfstate
 infra/terraform/*.tfstate.*
 infra/terraform/.terraform.lock.hcl
-# infra/terraform/terraform.tfvars
-# infra/terraform/*.tfvars
+infra/terraform/terraform.tfvars
+infra/terraform/*.tfvars
 # infra/ansible/inventory.ini
 infra/ansible/group_vars/all.yml
 infra/ansible/group_vars/vault.yml
