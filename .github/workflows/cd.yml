@@ -4,14 +4,31 @@ on:
   push:
     branches:
       - main
+  
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: "Deployment target"
+        required: true
+        default: "both"
+        type: choice
+        options:
+          - kubernetes
+          - azure-vm
+          - both
 
 concurrency:
   group: cd-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/aet-devops26/team-coffeelovers
+
+  K8S_NAMESPACE: team-coffeelovers-devops26
+  K8S_RELEASE_NAME: coffeelovers
+  HELM_CHART_PATH: ./infra/helm/coffeelovers
+  PUBLIC_URL: https://team-coffeelovers-devops26.stud.k8s.aet.cit.tum.de
 
 jobs:
   build-and-push:
@@ -42,7 +59,7 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/client:latest
             ${{ env.IMAGE_PREFIX }}/client:${{ github.sha }}
           build-args: |
-            REACT_APP_API_URL=https://team-coffeelovers-devops26.stud.k8s.aet.cit.tum.de
+            REACT_APP_API_URL=${{ env.PUBLIC_URL }}
 
       - name: Build and push auth-service image
         uses: docker/build-push-action@v5
@@ -64,10 +81,19 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/genai-service:latest
             ${{ env.IMAGE_PREFIX }}/genai-service:${{ github.sha }}
 
-  deploy:
-    name: Deploy to AET Cluster
+  deploy-to-kubernetes:
+    name: Deploy to AET Kubernetes Cluster
     runs-on: ubuntu-latest
     needs: build-and-push
+
+    if: |
+      github.event_name == 'push' ||
+      github.event.inputs.deploy_target == 'kubernetes' ||
+      github.event.inputs.deploy_target == 'both'
+
+    environment:
+      name: kubernetes-production
+      url: https://team-coffeelovers-devops26.stud.k8s.aet.cit.tum.de
 
     steps:
       - name: Checkout
@@ -87,11 +113,161 @@ jobs:
 
       - name: Deploy with Helm
         run: |
-          helm upgrade --install coffeelovers ./infra/helm/coffeelovers \
-            --namespace team-coffeelovers-devops26 \
+          helm upgrade --install "${{ env.K8S_RELEASE_NAME }}" "${{ env.HELM_CHART_PATH }}" \
+            --namespace "${{ env.K8S_NAMESPACE }}" \
             --create-namespace \
             --set-string secrets.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
             --set-string secrets.openaiApiKey="${{ secrets.OPENAI_API_KEY }}" \
             --set-string secrets.jwtSecret="${{ secrets.JWT_SECRET }}" \
             --set global.image.tag=${{ github.sha }} \
             --wait --timeout 5m
+
+  deploy-to-azure-vm:
+    name: Deploy to Azure VM with Ansible
+    runs-on: ubuntu-latest
+    needs:
+      - build-and-push
+
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      (github.event.inputs.deploy_target == 'azure-vm' || github.event.inputs.deploy_target == 'both')
+
+    environment:
+      name: azure-vm-production
+      url: http://${{ secrets.AZURE_VM_IP }}:3000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~1.0'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install "ansible>=2.12.0"
+
+      - name: Terraform init
+        working-directory: infra/terraform
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        working-directory: infra/terraform
+        env:
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_public_ip_address: ${{ secrets.AZURE_VM_IP }}
+        run: terraform validate
+
+      - name: Terraform apply
+        working-directory: infra/terraform
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_public_ip_address: ${{ secrets.AZURE_VM_IP }}
+          TF_VAR_resource_group_name: devops
+          TF_VAR_virtual_network_name: devops-vnet
+          TF_VAR_subnet_name: default
+          TF_VAR_network_interface_name: devops225_z1
+          TF_VAR_vm_name: devops
+          TF_VAR_admin_username: azureuser
+          TF_VAR_location: swedencentral
+          TF_VAR_environment: prod
+        run: terraform apply -auto-approve
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.AZURE_VM_IP }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy full stack with Ansible
+        working-directory: infra/ansible
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ANSIBLE_HOST_KEY_CHECKING: false
+        run: |
+          ansible-playbook -i inventory.ini site.yml \
+            -e "ansible_host=${{ secrets.AZURE_VM_IP }}" \
+            -e "ansible_user=azureuser" \
+            -e "ansible_ssh_private_key_file=~/.ssh/id_rsa" \
+            -v
+
+      - name: Verify Azure VM services
+        run: |
+          VM_IP="${{ secrets.AZURE_VM_IP }}"
+
+          echo "Checking GenAI Service on port 8001..."
+          for i in {1..30}; do
+            if curl -f "http://$VM_IP:8001/health" 2>/dev/null; then
+              echo "GenAI service is healthy"
+              break
+            fi
+
+            if [ "$i" -eq 30 ]; then
+              echo "GenAI service health check failed"
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          echo "Checking Backend API on port 8081..."
+          for i in {1..30}; do
+            if timeout 2 bash -c "echo > /dev/tcp/$VM_IP/8081" 2>/dev/null; then
+              echo "Backend API is reachable"
+              break
+            fi
+
+            if [ "$i" -eq 30 ]; then
+              echo "Backend API check failed"
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          echo "Checking React Client on port 3000..."
+          for i in {1..30}; do
+            if timeout 2 bash -c "echo > /dev/tcp/$VM_IP/3000" 2>/dev/null; then
+              echo "React Client is reachable"
+              break
+            fi
+
+            if [ "$i" -eq 30 ]; then
+              echo "React Client check failed"
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+      - name: Post Azure VM deployment summary
+        if: success()
+        run: |
+          echo "## Azure VM Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Web UI: http://${{ secrets.AZURE_VM_IP }}:3000" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend API: http://${{ secrets.AZURE_VM_IP }}:8081" >> $GITHUB_STEP_SUMMARY
+          echo "- GenAI Service: http://${{ secrets.AZURE_VM_IP }}:8001" >> $GITHUB_STEP_SUMMARY
+          echo "- GenAI Health: http://${{ secrets.AZURE_VM_IP }}:8001/health" >> $GITHUB_STEP_SUMMARY

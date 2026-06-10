@@ -21,6 +21,9 @@ The goal of this project is to make travel planning faster, easier, and more pra
 
 - [Problem Statement](docs/problem-statement.md)
 - [Launch the System](docs/how-to-launch.md)
+- [Infrastructure Automation](docs/infrastructure-automation.md)
+
+The infrastructure automation docs assume you will provide your own Azure resource names and VM IP (via `infra/terraform/terraform.tfvars` and the Ansible inventory).
 
 ## Repository Structure
 
