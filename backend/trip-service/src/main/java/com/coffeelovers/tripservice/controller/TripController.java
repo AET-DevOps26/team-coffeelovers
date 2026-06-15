@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/trips")
+@RequestMapping("/trips")
 public class TripController {
 
     private final TripService tripService;
