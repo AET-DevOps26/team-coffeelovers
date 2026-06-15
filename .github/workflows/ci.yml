@@ -186,7 +186,10 @@ jobs:
 
       - name: Build backend Docker image
         run: docker build -t auth-service:test -f backend/auth-service/Dockerfile backend/
-      
+
+      - name: Build trip-service Docker image
+        run: docker build -t trip-service:test -f backend/trip-service/Dockerfile backend/
+
       - name: Build frontend Docker image
         run: docker build -t client-service:test -f client/Dockerfile client/
   
