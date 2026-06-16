@@ -81,6 +81,16 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/genai-service:latest
             ${{ env.IMAGE_PREFIX }}/genai-service:${{ github.sha }}
 
+      - name: Build and push trip-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/trip-service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/trip-service:latest
+            ${{ env.IMAGE_PREFIX }}/trip-service:${{ github.sha }}
+
   deploy-to-kubernetes:
     name: Deploy to AET Kubernetes Cluster
     runs-on: ubuntu-latest

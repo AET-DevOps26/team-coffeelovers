@@ -36,6 +36,24 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  trip-service:
+    build:
+      context: ../backend
+      dockerfile: trip-service/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-coffeelovers}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-coffeelovers}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-coffeelovers}
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
   client:
     build:
       context: ../client

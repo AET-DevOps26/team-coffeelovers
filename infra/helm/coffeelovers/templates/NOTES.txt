@@ -15,6 +15,9 @@ Auth endpoints:
 Backend API:
   https://{{ .Values.ingress.host }}{{ .Values.ingress.paths.api }}
 
+Trip endpoints:
+  https://{{ .Values.ingress.host }}{{ .Values.ingress.paths.trips }}
+
 Check ingress:
   kubectl get ingress -n {{ .Release.Namespace }}
 

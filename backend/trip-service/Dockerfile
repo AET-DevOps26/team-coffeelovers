@@ -5,15 +5,15 @@ WORKDIR /app
 COPY settings.gradle ./
 COPY build.gradle ./
 COPY common ./common
-COPY backend/trip-service ./backend/trip-service
+COPY trip-service ./trip-service
 
-RUN gradle :backend:trip-service:bootJar --no-daemon
+RUN gradle :trip-service:bootJar --no-daemon
 
 FROM gcr.io/distroless/java21-debian12
 
 WORKDIR /app
 
-COPY --from=builder /app/backend/trip-service/build/libs/*.jar app.jar
+COPY --from=builder /app/trip-service/build/libs/*.jar app.jar
 
 EXPOSE 8082
 
