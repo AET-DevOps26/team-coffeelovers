@@ -50,3 +50,12 @@ spec:
                 port:
                   number: {{ (index .Values.services "genai-service").port }}
           {{- end }}
+          {{- if (index .Values.services "trip-service").enabled }}
+          - path: {{ .Values.ingress.paths.trips }}
+            pathType: Prefix
+            backend:
+              service:
+                name: trip-service
+                port:
+                  number: {{ (index .Values.services "trip-service").port }}
+          {{- end }}
