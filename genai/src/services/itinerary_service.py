@@ -2,11 +2,12 @@
 Service layer for GenAI itinerary and suggestion generation.
 
 The service layer keeps route handlers thin and delegates the actual generation
-work to the selected provider. For now, it uses the mock provider. Later, this
-is where OpenAI or Logos provider selection can be added.
+work to the selected provider. Provider selection is handled through the
+provider factory so future OpenAI and Logos integrations can be added without
+changing route handlers.
 """
 
-from src.providers.mock_provider import MockProvider
+from src.providers.factory import create_provider
 from src.schemas import (
     GenerateItineraryRequest,
     GenerateItineraryResponse,
@@ -19,7 +20,7 @@ class ItineraryService:
     """Coordinates itinerary and suggestion generation."""
 
     def __init__(self) -> None:
-        self.provider = MockProvider()
+        self.provider = create_provider()
 
     def generate_itinerary(
         self,
