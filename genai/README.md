@@ -104,6 +104,23 @@ LOG_LEVEL=INFO
 
 The current minimal service does not require these variables yet. They are included as placeholders for future LLM integration.
 
+## Provider Configuration
+
+The GenAI service supports provider selection through environment variables.
+
+Current supported runtime mode:
+
+| Provider | Status | Description |
+|---|---|---|
+| `mock` | Implemented | Deterministic local provider for development, testing, and CI |
+| `openai` | Planned | OpenAI-compatible cloud provider |
+| `logos` | Planned | TUM Logos OpenAI-compatible provider |
+
+Default mode:
+
+```env
+GENAI_PROVIDER=mock
+
 ## Docker Compose
 
 The GenAI service can be added to `docker-compose.yml` as an independent service:
