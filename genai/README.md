@@ -55,11 +55,13 @@ http://127.0.0.1:8001
 
 ## Available Endpoints
 
-| Method | Endpoint  | Description                         |
-| ------ | --------- | ----------------------------------- |
-| GET    | `/genai/`       | Returns basic service information   |
-| GET    | `/genai/health` | Returns service health status       |
-| GET    | `/docs`         | Opens FastAPI Swagger documentation |
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/genai/` | Returns basic service information |
+| GET | `/genai/health` | Returns service health status |
+| POST | `/api/v1/genai/generate` | Generates a personalized day-by-day itinerary |
+| POST | `/api/v1/genai/suggest` | Suggests travel preferences and activity ideas |
+| GET | `/docs` | Opens FastAPI Swagger documentation |
 
 ## Docker Usage
 
