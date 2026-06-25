@@ -22,6 +22,8 @@ function LoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Login failed");
       localStorage.setItem("token", data.token);
+      const payload = JSON.parse(atob(data.token.split(".")[1]));
+      localStorage.setItem("userId", payload.userId);
       navigate("/");
     } catch (err) {
       setError(err.message);

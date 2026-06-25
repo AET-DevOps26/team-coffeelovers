@@ -35,7 +35,7 @@ function Navbar() {
       </Link>
 
       <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
-        <NavLink to="/plans" style={linkStyle}>Plan Trip</NavLink>
+        <NavLink to="/" style={linkStyle}>Plan Trip</NavLink>
         <NavLink to="/plans" style={linkStyle}>My Plans</NavLink>
         {token ? (
           <button onClick={handleLogout} style={{
