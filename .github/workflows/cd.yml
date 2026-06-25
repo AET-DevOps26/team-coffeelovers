@@ -258,11 +258,16 @@ jobs:
 
           delete_rule_if_exists "Allow-client_web"
           delete_rule_if_exists "Allow-backend_api"
+          delete_rule_if_exists "Allow-auth_service"
+          delete_rule_if_exists "Allow-trip_service"
           delete_rule_if_exists "Allow-genai_service"
+          delete_rule_if_exists "Allow-gateway"
 
           create_rule "Allow-client_web" 3100 3000
-          create_rule "Allow-backend_api" 3110 8081
-          create_rule "Allow-genai_service" 3120 8001
+          create_rule "Allow-auth_service" 3110 8081
+          create_rule "Allow-trip_service" 3120 8082
+          create_rule "Allow-genai_service" 3130 8001
+          create_rule "Allow-gateway" 3140 8080
 
       - name: Setup SSH key
         run: |
@@ -290,45 +295,79 @@ jobs:
         run: |
           VM_IP="${{ secrets.AZURE_VM_IP }}"
 
-          echo "Checking GenAI Service on port 8001..."
+          echo "Checking Docker Compose services on Azure VM..."
+          ssh -i ~/.ssh/devops_key.pem azureuser@"$VM_IP" <<'EOF'
+            set -euo pipefail
+
+            cd /opt/team-coffeelovers
+
+            echo "Docker Compose service status:"
+            docker compose -f infra/docker-compose.yml ps
+
+            echo "Checking expected services are running..."
+            docker compose -f infra/docker-compose.yml ps --services --filter "status=running" | tee /tmp/running-services.txt
+
+            grep -q "^postgres$" /tmp/running-services.txt
+            grep -q "^auth-service$" /tmp/running-services.txt
+            grep -q "^trip-service$" /tmp/running-services.txt
+            grep -q "^client$" /tmp/running-services.txt
+            grep -q "^genai$" /tmp/running-services.txt
+            grep -q "^gateway$" /tmp/running-services.txt
+
+            echo "Checking GenAI health from VM host..."
+            for i in $(seq 1 30); do
+              if curl -f http://localhost:8001/genai/health; then
+                echo "GenAI service is healthy from VM host"
+                break
+              fi
+
+              if [ "$i" -eq 30 ]; then
+                echo "GenAI health check failed from VM host"
+                echo "Recent GenAI logs:"
+                docker compose -f infra/docker-compose.yml logs --tail=100 genai
+                exit 1
+              fi
+
+              sleep 5
+            done
+
+            echo "Checking auth service from VM host..."
+            timeout 2 bash -c "echo > /dev/tcp/localhost/8081"
+
+            echo "Checking trip service from VM host..."
+            timeout 2 bash -c "echo > /dev/tcp/localhost/8082"
+
+            echo "Checking client from VM host..."
+            timeout 2 bash -c "echo > /dev/tcp/localhost/3000"
+
+            echo "Checking gateway from VM host..."
+            timeout 2 bash -c "echo > /dev/tcp/localhost/8080"
+          EOF
+
+          echo "Checking public GenAI Service on port 8001..."
           for i in {1..30}; do
-            if curl -f "http://$VM_IP:8001/health" 2>/dev/null; then
-              echo "GenAI service is healthy"
+            if curl -f "http://$VM_IP:8001/genai/health" 2>/dev/null; then
+              echo "Public GenAI service is healthy"
               break
             fi
 
             if [ "$i" -eq 30 ]; then
-              echo "GenAI service health check failed"
+              echo "Public GenAI service health check failed"
               exit 1
             fi
 
             sleep 5
           done
 
-          echo "Checking Backend API on port 8081..."
+          echo "Checking public Gateway on port 8080..."
           for i in {1..30}; do
-            if timeout 2 bash -c "echo > /dev/tcp/$VM_IP/8081" 2>/dev/null; then
-              echo "Backend API is reachable"
+            if timeout 2 bash -c "echo > /dev/tcp/$VM_IP/8080" 2>/dev/null; then
+              echo "Public Gateway is reachable"
               break
             fi
 
             if [ "$i" -eq 30 ]; then
-              echo "Backend API check failed"
-              exit 1
-            fi
-
-            sleep 5
-          done
-
-          echo "Checking React Client on port 3000..."
-          for i in {1..30}; do
-            if timeout 2 bash -c "echo > /dev/tcp/$VM_IP/3000" 2>/dev/null; then
-              echo "React Client is reachable"
-              break
-            fi
-
-            if [ "$i" -eq 30 ]; then
-              echo "React Client check failed"
+              echo "Public Gateway check failed"
               exit 1
             fi
 
@@ -341,6 +380,8 @@ jobs:
           echo "## Azure VM Deployment Successful" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Web UI: http://${{ secrets.AZURE_VM_IP }}:3000" >> $GITHUB_STEP_SUMMARY
-          echo "- Backend API: http://${{ secrets.AZURE_VM_IP }}:8081" >> $GITHUB_STEP_SUMMARY
+          echo "- Gateway: http://${{ secrets.AZURE_VM_IP }}:8080" >> $GITHUB_STEP_SUMMARY
+          echo "- Auth Service: http://${{ secrets.AZURE_VM_IP }}:8081" >> $GITHUB_STEP_SUMMARY
+          echo "- Trip Service: http://${{ secrets.AZURE_VM_IP }}:8082" >> $GITHUB_STEP_SUMMARY
           echo "- GenAI Service: http://${{ secrets.AZURE_VM_IP }}:8001" >> $GITHUB_STEP_SUMMARY
-          echo "- GenAI Health: http://${{ secrets.AZURE_VM_IP }}:8001/health" >> $GITHUB_STEP_SUMMARY
+          echo "- GenAI Health: http://${{ secrets.AZURE_VM_IP }}:8001/genai/health" >> $GITHUB_STEP_SUMMARY
