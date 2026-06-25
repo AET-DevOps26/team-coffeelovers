@@ -66,3 +66,9 @@ variable "tags" {
     "Owner"       = "DevOps-Team"
   }
 }
+
+variable "network_security_group_name" {
+  description = "Existing network security group name attached to the Azure VM"
+  type        = string
+  default     = "devops-nsg"
+}
