@@ -5,20 +5,49 @@
   gather_facts: true
 
   vars:
-    docker_packages:
-      - docker.io
-      - docker-compose-plugin
+    base_packages:
       - git
       - ca-certificates
       - curl
       - gnupg
 
+    docker_packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+
   tasks:
-    - name: Install required packages
+    - name: Install base packages
+      ansible.builtin.apt:
+        name: "{{ base_packages }}"
+        state: present
+        update_cache: true
+
+    - name: Create Docker apt keyring directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Add Docker official GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+        update_cache: true
+
+    - name: Install Docker packages
       ansible.builtin.apt:
         name: "{{ docker_packages }}"
         state: present
-        update_cache: true
 
     - name: Ensure Docker service is enabled and running
       ansible.builtin.systemd:
