@@ -274,10 +274,10 @@ jobs:
         working-directory: infra/ansible
         run: ansible-lint site.yml
 
-      - name: Ansible Syntax Check
-        working-directory: infra/ansible
-        run: ansible-playbook -i inventory.ini site.yml --syntax-check
-
       - name: Validate Inventory
         working-directory: infra/ansible
         run: ansible-inventory -i inventory.ini --list --yaml
+
+      - name: Ansible Syntax Check
+        working-directory: infra/ansible
+        run: ansible-playbook -i inventory.ini site.yml --syntax-check

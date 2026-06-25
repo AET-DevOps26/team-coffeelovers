@@ -46,10 +46,9 @@ output "ssh_command" {
 output "application_urls" {
   description = "URLs to access deployed applications"
   value = {
-    client_web       = "http://${var.public_ip_address}:3000"
-    backend_api      = "http://${var.public_ip_address}:8081"
-    genai_service    = "http://${var.public_ip_address}:8001"
-    genai_health     = "http://${var.public_ip_address}:8001/health"
-    postgres_connect = "postgresql://${var.admin_username}@${var.public_ip_address}:5432/coffeelovers"
+    client_web    = "http://${var.public_ip_address}:3000"
+    backend_api   = "http://${var.public_ip_address}:8081"
+    genai_service = "http://${var.public_ip_address}:8001"
+    genai_health  = "http://${var.public_ip_address}:8001/health"
   }
 }
