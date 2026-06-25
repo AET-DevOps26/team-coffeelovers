@@ -55,11 +55,13 @@ http://127.0.0.1:8001
 
 ## Available Endpoints
 
-| Method | Endpoint  | Description                         |
-| ------ | --------- | ----------------------------------- |
-| GET    | `/genai/`       | Returns basic service information   |
-| GET    | `/genai/health` | Returns service health status       |
-| GET    | `/docs`         | Opens FastAPI Swagger documentation |
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/genai/` | Returns basic service information |
+| GET | `/genai/health` | Returns service health status |
+| POST | `/api/v1/genai/generate` | Generates a personalized day-by-day itinerary |
+| POST | `/api/v1/genai/suggest` | Suggests travel preferences and activity ideas |
+| GET | `/docs` | Opens FastAPI Swagger documentation |
 
 ## Docker Usage
 
@@ -101,6 +103,23 @@ LOG_LEVEL=INFO
 ```
 
 The current minimal service does not require these variables yet. They are included as placeholders for future LLM integration.
+
+## Provider Configuration
+
+The GenAI service supports provider selection through environment variables.
+
+Current supported runtime mode:
+
+| Provider | Status | Description |
+|---|---|---|
+| `mock` | Implemented | Deterministic local provider for development, testing, and CI |
+| `openai` | Planned | OpenAI-compatible cloud provider |
+| `logos` | Planned | TUM Logos OpenAI-compatible provider |
+
+Default mode:
+
+```env
+GENAI_PROVIDER=mock
 
 ## Docker Compose
 

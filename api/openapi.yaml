@@ -1,0 +1,479 @@
+# AI Travel Planner - GenAI API Contract
+#
+# Purpose:
+# This OpenAPI file defines the REST API contract between the Spring Boot
+# backend services and the Python/FastAPI GenAI microservice.
+#
+# The file is the single source of truth for GenAI request and response models.
+# Backend, GenAI, frontend, tests, and future generated clients should follow
+# the schemas and endpoints defined here instead of inventing separate DTOs.
+#
+# Current scope:
+# - Health check endpoint for the GenAI service
+# - Versioned itinerary generation endpoint:
+#   POST /api/v1/genai/generate
+# - Versioned travel suggestion endpoint:
+#   POST /api/v1/genai/suggest
+# - Shared schemas for request payloads, responses, budget, activities,
+#   itinerary days, and errors
+#
+# Design notes:
+# - Business endpoints are versioned under /api/v1/genai.
+# - /genai/health is kept outside the versioned API path because it is an
+#   operational endpoint used for local checks, Docker Compose, and future
+#   Kubernetes probes.
+# - Bearer authentication is defined at the root level for business endpoints.
+# - The health endpoint overrides security with `security: []` so it can be
+#   called by health checks without a token.
+#
+# Runtime note:
+# This file defines the API contract. The FastAPI implementation must expose
+# matching endpoints and response shapes. If the implementation changes, this
+# file must be updated together with the code.
+#
+# Future improvements:
+# - Generate Java client/models for the Spring Boot backend.
+# - Generate TypeScript API types for the frontend.
+# - Decide whether generated clients are committed or generated during CI.
+# - Add this OpenAPI lint step to CI:
+#   npx @redocly/cli lint api/openapi.yaml
+
+openapi: 3.0.3
+
+info:
+  title: "AI Travel Planner - GenAI API"
+  description: >
+    OpenAPI contract for the AI Travel Planner GenAI service.
+    The GenAI service is a separate Python microservice responsible for
+    generating personalized travel itineraries and travel suggestions.
+    This specification defines the contract between the Spring Boot backend
+    and the Python GenAI service.
+  version: "1.0.0"
+  license:
+    name: "UNLICENSED"
+    url: "https://choosealicense.com/no-permission/"
+  contact:
+    name: "CoffeeLovers Team"
+
+servers:
+  - url: "{protocol}://{host}:{port}"
+    description: "Configurable GenAI service URL"
+    variables:
+      protocol:
+        default: "http"
+        enum:
+          - "http"
+          - "https"
+      host:
+        default: "localhost"
+      port:
+        default: "8001"
+  - url: "http://genai:8001"
+    description: "Docker Compose internal GenAI service URL"
+  
+security:
+  - bearerAuth: []
+
+tags:
+  - name: "GenAI"
+    description: "Operations for AI-powered itinerary generation and travel suggestions"
+
+paths:
+  /genai/health:
+    get:
+      tags:
+        - "GenAI"
+      summary: "Health check endpoint"
+      description: "Checks whether the GenAI service is running."
+      operationId: "getGenAiHealth"
+      security: []
+      responses:
+        "200":
+          description: "Service is healthy"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: "ok"
+                service: "genai"
+                version: "1.0.0"
+        "400":
+          description: "Health check request could not be processed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/genai/generate:
+    post:
+      tags:
+        - "GenAI"
+      summary: "Generate a personalized travel itinerary"
+      description: >
+        Generates a structured day-by-day travel itinerary based on destination,
+        number of days, user preferences, and budget. This endpoint is used by
+        the Spring Boot backend to request AI-generated travel plans from the
+        Python GenAI service.
+      operationId: "generateItinerary"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateItineraryRequest"
+            example:
+              destination: "Maastricht"
+              days: 2
+              preferences:
+                - "old town"
+                - "local food"
+                - "photo spots"
+              budget:
+                amount: 250
+                currency: "EUR"
+      responses:
+        "200":
+          description: "Successfully generated itinerary"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateItineraryResponse"
+              example:
+                summary: "A relaxed 2-day cultural trip in Maastricht with local food, old town walks, and photo spots."
+                itinerary:
+                  - day: 1
+                    title: "Old Town and Local Food"
+                    activities:
+                      - title: "Vrijthof Square"
+                        description: "Start the trip at Maastricht's central square and explore the surrounding historic streets."
+                        location: "Vrijthof, Maastricht"
+                        estimatedDuration: "1.5 hours"
+                        estimatedCost:
+                          amount: 0
+                          currency: "EUR"
+                        category: "sightseeing"
+                      - title: "Local Dinner"
+                        description: "Try local food in the old town area."
+                        location: "Maastricht Old Town"
+                        estimatedDuration: "2 hours"
+                        estimatedCost:
+                          amount: 35
+                          currency: "EUR"
+                        category: "food"
+                  - day: 2
+                    title: "Museums and Photo Spots"
+                    activities:
+                      - title: "Bookstore Dominicanen"
+                        description: "Visit the famous bookstore inside a former church."
+                        location: "Boekhandel Dominicanen"
+                        estimatedDuration: "1 hour"
+                        estimatedCost:
+                          amount: 0
+                          currency: "EUR"
+                        category: "culture"
+                activities:
+                  - title: "Vrijthof Square"
+                    description: "Historic central square with cafes and churches."
+                    location: "Vrijthof, Maastricht"
+                    estimatedDuration: "1.5 hours"
+                    estimatedCost:
+                      amount: 0
+                      currency: "EUR"
+                    category: "sightseeing"
+                  - title: "Bookstore Dominicanen"
+                    description: "Famous bookstore inside a former church."
+                    location: "Boekhandel Dominicanen"
+                    estimatedDuration: "1 hour"
+                    estimatedCost:
+                      amount: 0
+                      currency: "EUR"
+                    category: "culture"
+        "400":
+          description: "Invalid request parameters"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "INVALID_REQUEST"
+                message: "days must be greater than 0"
+                details:
+                  field: "days"
+                  reason: "must be greater than 0"
+        "502":
+          description: "GenAI provider failed or returned an invalid response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: "GENAI_PROVIDER_ERROR"
+                message: "The GenAI provider could not generate an itinerary"
+                details:
+                  provider: "logos"
+        "500":
+          description: "Unexpected internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/genai/suggest:
+    post:
+      tags:
+        - "GenAI"
+      summary: "Suggest travel preferences and activity ideas"
+      description: >
+        Suggests travel preferences, activity categories, or destination-specific
+        ideas that can help the user refine their itinerary request.
+      operationId: "suggestTravelIdeas"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuggestRequest"
+            example:
+              destination: "Maastricht"
+              days: 2
+              budget:
+                amount: 250
+                currency: "EUR"
+      responses:
+        "200":
+          description: "Successfully generated suggestions"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuggestResponse"
+              example:
+                suggestions:
+                  - "old town"
+                  - "local food"
+                  - "photo spots"
+                  - "museums"
+                  - "riverside walk"
+        "400":
+          description: "Invalid request parameters"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: "GenAI provider failed or returned an invalid response"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Unexpected internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+      properties:
+        status:
+          type: string
+          description: "Service health status"
+          example: "ok"
+        service:
+          type: string
+          description: "Service name"
+          example: "genai"
+        version:
+          type: string
+          description: "Service version"
+          example: "1.0.0"
+
+    GenerateItineraryRequest:
+      type: object
+      required:
+        - destination
+        - days
+        - preferences
+        - budget
+      properties:
+        destination:
+          type: string
+          minLength: 1
+          description: "Travel destination"
+          example: "Maastricht"
+        days:
+          type: integer
+          minimum: 1
+          maximum: 30
+          description: "Number of travel days"
+          example: 2
+        preferences:
+          type: array
+          minItems: 1
+          description: "User travel preferences"
+          items:
+            type: string
+          example:
+            - "old town"
+            - "local food"
+            - "photo spots"
+        budget:
+          $ref: "#/components/schemas/Budget"
+
+    GenerateItineraryResponse:
+      type: object
+      required:
+        - summary
+        - itinerary
+        - activities
+      properties:
+        summary:
+          type: string
+          description: "Short summary of the generated itinerary"
+          example: "A relaxed 2-day cultural trip in Maastricht."
+        itinerary:
+          type: array
+          description: "Day-by-day travel itinerary"
+          items:
+            $ref: "#/components/schemas/ItineraryDay"
+        activities:
+          type: array
+          description: "Flattened list of all suggested activities"
+          items:
+            $ref: "#/components/schemas/Activity"
+
+    SuggestRequest:
+      type: object
+      required:
+        - destination
+        - days
+        - budget
+      properties:
+        destination:
+          type: string
+          minLength: 1
+          description: "Travel destination"
+          example: "Maastricht"
+        days:
+          type: integer
+          minimum: 1
+          maximum: 30
+          description: "Number of travel days"
+          example: 2
+        budget:
+          $ref: "#/components/schemas/Budget"
+
+    SuggestResponse:
+      type: object
+      required:
+        - suggestions
+      properties:
+        suggestions:
+          type: array
+          description: "Suggested travel preferences or activity ideas"
+          items:
+            type: string
+          example:
+            - "old town"
+            - "local food"
+            - "photo spots"
+
+    ItineraryDay:
+      type: object
+      required:
+        - day
+        - title
+        - activities
+      properties:
+        day:
+          type: integer
+          minimum: 1
+          description: "Day number in the itinerary"
+          example: 1
+        title:
+          type: string
+          description: "Title for the day"
+          example: "Old Town and Local Food"
+        activities:
+          type: array
+          description: "Activities planned for this day"
+          items:
+            $ref: "#/components/schemas/Activity"
+
+    Activity:
+      type: object
+      required:
+        - title
+        - description
+      properties:
+        title:
+          type: string
+          description: "Activity title"
+          example: "Vrijthof Square"
+        description:
+          type: string
+          description: "Activity description"
+          example: "Explore Maastricht's central square and nearby historic streets."
+        location:
+          type: string
+          description: "Activity location"
+          example: "Vrijthof, Maastricht"
+        estimatedDuration:
+          type: string
+          description: "Estimated activity duration"
+          example: "1.5 hours"
+        estimatedCost:
+          $ref: "#/components/schemas/Budget"
+        category:
+          type: string
+          description: "Activity category"
+          example: "sightseeing"
+
+    Budget:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: number
+          minimum: 0
+          description: "Budget amount"
+          example: 250
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: "ISO 4217 currency code"
+          example: "EUR"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: "Machine-readable error code"
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          description: "Human-readable error message"
+          example: "days must be greater than 0"
+        details:
+          type: object
+          additionalProperties: true
+          description: "Optional error details"

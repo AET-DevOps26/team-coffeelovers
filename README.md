@@ -23,8 +23,6 @@ The goal of this project is to make travel planning faster, easier, and more pra
 - [Launch the System](docs/how-to-launch.md)
 - [Infrastructure Automation](docs/infrastructure-automation.md)
 
-The infrastructure automation docs assume you will provide your own Azure resource names and VM IP (via `infra/terraform/terraform.tfvars` and the Ansible inventory).
-
 ## Repository Structure
 
 - `/api` : OpenAPI / API specifications.
@@ -32,6 +30,49 @@ The infrastructure automation docs assume you will provide your own Azure resour
 - `/client` : Frontend application.
 - `/infra` : Docker, infrastructure and deployment files.
 - `.github/workflows` : CI pipeline definitions.
+
+## Local Development with API Gateway
+
+The local Docker Compose setup includes an NGINX API Gateway as the single entrypoint for local API requests.
+
+The gateway is available at:
+
+```txt
+http://localhost:8080
+```
+
+It routes requests to the internal services:
+
+| External Route    | Internal Service |
+| ----------------- | ---------------- |
+| `/api/v1/auth/*`  | `auth-service`   |
+| `/api/v1/trips/*` | `trip-service`   |
+| `/api/v1/genai/*` | `genai`          |
+| `/genai/health`   | `genai`          |
+
+The gateway keeps the public local API paths consistent while allowing services to keep their internal routes.
+
+### Start the Local System
+
+From the `infra` directory:
+
+```bash
+docker compose up --build
+```
+
+### Quick Verification
+
+```bash
+curl http://localhost:8080/genai/health
+curl http://localhost:8080/api/v1/trips/health
+```
+
+For a full local infrastructure test guide, see:
+
+```txt
+infra/README.md
+```
+
 
 ## Responsibilities
 

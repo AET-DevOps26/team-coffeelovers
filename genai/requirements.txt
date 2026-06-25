@@ -1,3 +1,7 @@
 fastapi
 python-dotenv
 uvicorn
+# python testing
+pytest
+# fastapi testing
+httpx
