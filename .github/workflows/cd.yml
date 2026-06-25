@@ -218,47 +218,51 @@ jobs:
         run: |
           set -euo pipefail
 
-          upsert_rule() {
+          delete_rule_if_exists() {
             local name="$1"
-            local priority="$2"
-            local port="$3"
 
             if az network nsg rule show \
               --resource-group "$AZURE_RESOURCE_GROUP" \
               --nsg-name "$AZURE_NSG_NAME" \
               --name "$name" >/dev/null 2>&1; then
 
-              az network nsg rule update \
+              echo "Deleting existing NSG rule: $name"
+              az network nsg rule delete \
                 --resource-group "$AZURE_RESOURCE_GROUP" \
                 --nsg-name "$AZURE_NSG_NAME" \
-                --name "$name" \
-                --priority "$priority" \
-                --direction Inbound \
-                --access Allow \
-                --protocol Tcp \
-                --source-address-prefixes "*" \
-                --source-port-ranges "*" \
-                --destination-address-prefixes "*" \
-                --destination-port-ranges "$port"
+                --name "$name"
             else
-              az network nsg rule create \
-                --resource-group "$AZURE_RESOURCE_GROUP" \
-                --nsg-name "$AZURE_NSG_NAME" \
-                --name "$name" \
-                --priority "$priority" \
-                --direction Inbound \
-                --access Allow \
-                --protocol Tcp \
-                --source-address-prefixes "*" \
-                --source-port-ranges "*" \
-                --destination-address-prefixes "*" \
-                --destination-port-ranges "$port"
+              echo "NSG rule does not exist, skipping delete: $name"
             fi
           }
 
-          upsert_rule "Allow-client_web" 1300 3000
-          upsert_rule "Allow-backend_api" 1301 8081
-          upsert_rule "Allow-genai_service" 1302 8001
+          create_rule() {
+            local name="$1"
+            local priority="$2"
+            local port="$3"
+
+            echo "Creating NSG rule: $name on port $port with priority $priority"
+            az network nsg rule create \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --nsg-name "$AZURE_NSG_NAME" \
+              --name "$name" \
+              --priority "$priority" \
+              --direction Inbound \
+              --access Allow \
+              --protocol Tcp \
+              --source-address-prefixes "*" \
+              --source-port-ranges "*" \
+              --destination-address-prefixes "*" \
+              --destination-port-ranges "$port"
+          }
+
+          delete_rule_if_exists "Allow-client_web"
+          delete_rule_if_exists "Allow-backend_api"
+          delete_rule_if_exists "Allow-genai_service"
+
+          create_rule "Allow-client_web" 3100 3000
+          create_rule "Allow-backend_api" 3110 8081
+          create_rule "Allow-genai_service" 3120 8001
 
       - name: Setup SSH key
         run: |
