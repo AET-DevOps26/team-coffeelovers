@@ -163,6 +163,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install "ansible>=2.12.0"
+      
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
 
       - name: Terraform init
         working-directory: infra/terraform
@@ -178,7 +189,6 @@ jobs:
         env:
           TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           TF_VAR_public_ip_address: ${{ secrets.AZURE_VM_IP }}
-          TF_VAR_network_security_group_name: devops-nsg
         run: terraform validate
 
       - name: Terraform apply
@@ -195,18 +205,67 @@ jobs:
           TF_VAR_virtual_network_name: devops-vnet
           TF_VAR_subnet_name: default
           TF_VAR_network_interface_name: devops225_z1
-          TF_VAR_network_security_group_name: devops-nsg
           TF_VAR_vm_name: devops
           TF_VAR_admin_username: azureuser
           TF_VAR_location: swedencentral
           TF_VAR_environment: prod
         run: terraform apply -auto-approve
 
+      - name: Configure Azure VM application ports
+        env:
+          AZURE_RESOURCE_GROUP: devops
+          AZURE_NSG_NAME: devops-nsg
+        run: |
+          set -euo pipefail
+
+          upsert_rule() {
+            local name="$1"
+            local priority="$2"
+            local port="$3"
+
+            if az network nsg rule show \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --nsg-name "$AZURE_NSG_NAME" \
+              --name "$name" >/dev/null 2>&1; then
+
+              az network nsg rule update \
+                --resource-group "$AZURE_RESOURCE_GROUP" \
+                --nsg-name "$AZURE_NSG_NAME" \
+                --name "$name" \
+                --priority "$priority" \
+                --direction Inbound \
+                --access Allow \
+                --protocol Tcp \
+                --source-address-prefixes "*" \
+                --source-port-ranges "*" \
+                --destination-address-prefixes "*" \
+                --destination-port-ranges "$port"
+            else
+              az network nsg rule create \
+                --resource-group "$AZURE_RESOURCE_GROUP" \
+                --nsg-name "$AZURE_NSG_NAME" \
+                --name "$name" \
+                --priority "$priority" \
+                --direction Inbound \
+                --access Allow \
+                --protocol Tcp \
+                --source-address-prefixes "*" \
+                --source-port-ranges "*" \
+                --destination-address-prefixes "*" \
+                --destination-port-ranges "$port"
+            fi
+          }
+
+          upsert_rule "Allow-client_web" 1300 3000
+          upsert_rule "Allow-backend_api" 1301 8081
+          upsert_rule "Allow-genai_service" 1302 8001
+
       - name: Setup SSH key
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/devops_key.pem
           chmod 600 ~/.ssh/devops_key.pem
+          ssh-keygen -y -f ~/.ssh/devops_key.pem > /dev/null
           ssh-keyscan -H "${{ secrets.AZURE_VM_IP }}" >> ~/.ssh/known_hosts
 
       - name: Deploy full stack with Ansible
