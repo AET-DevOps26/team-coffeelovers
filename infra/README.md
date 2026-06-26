@@ -55,14 +55,14 @@ genai: /api/v1/genai/*
 
 ## Local URLs
 
-| URL                          | Purpose                                                           |
-| ---------------------------- | ----------------------------------------------------------------- |
-| `http://localhost:3000`      | Frontend application                                              |
-| `http://localhost:8001/docs` | GenAI Swagger UI                                                  |
-| `http://localhost:8080`      | API Gateway root; may return `404`                                |
-| `http://localhost:8081`      | Auth service direct port; may return `403` or `404`               |
-| `http://localhost:8082`      | Trip service direct port; may return Spring Boot Whitelabel `404` |
-| `localhost:5432`             | PostgreSQL database port                                          |
+| URL                          | Purpose                  |
+| ---------------------------- | ------------------------ |
+| `http://localhost:3000`      | Frontend application     |
+| `http://localhost:8001/docs` | GenAI Swagger UI         |
+| `http://localhost:8080`      | API Gateway root         |
+| `http://localhost:8081`      | Auth service direct port |
+| `http://localhost:8082`      | Trip service direct port |
+| `localhost:5432`             | PostgreSQL database port |
 
 A `404` or `403` on a backend root URL does not necessarily mean the service is broken. Use the frontend or the documented API endpoints for verification.
 
@@ -119,11 +119,28 @@ List configured services:
 docker compose config --services
 ```
 
+Expected result includes:
+
+```txt
+postgres
+auth-service
+client
+genai
+trip-service
+gateway
+```
+
 Check running containers:
 
 ```bash
 docker compose ps
 ```
+
+Expected result:
+
+* The main application containers are listed.
+* Running services should show an active/running state.
+* If health checks are configured, healthy services should show a healthy status.
 
 ## Check PostgreSQL
 
@@ -133,10 +150,23 @@ Check database readiness:
 docker compose exec postgres pg_isready -U coffeelovers
 ```
 
+Expected result:
+
+```txt
+accepting connections
+```
+
 List database tables:
 
 ```bash
 docker compose exec postgres psql -U coffeelovers -d coffeelovers -c "\dt"
+```
+
+Expected result includes project tables such as:
+
+```txt
+auth_users
+trips
 ```
 
 ## Check API Gateway Routes
@@ -153,10 +183,29 @@ http://localhost:8080
 curl http://localhost:8080/genai/health
 ```
 
+Expected result:
+
+```json
+{
+  "status": "ok",
+  "service": "genai",
+  "version": "1.0.0"
+}
+```
+
 ### Trip Health
 
 ```bash
 curl http://localhost:8080/api/v1/trips/health
+```
+
+Expected result:
+
+```json
+{
+  "status": "UP",
+  "service": "trip-service"
+}
 ```
 
 ### GenAI Generate
@@ -175,6 +224,13 @@ curl -X POST http://localhost:8080/api/v1/genai/generate \
   }'
 ```
 
+Expected result:
+
+* HTTP 200
+* Response contains `summary`
+* Response contains `itinerary`
+* Response contains `activities`
+
 ### Auth Register
 
 ```bash
@@ -186,6 +242,11 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
     "password": "Password123!"
   }'
 ```
+
+Expected result:
+
+* HTTP 200
+* Response contains authentication data such as a JWT token.
 
 If the same email was already registered, use a different email address or reset the local database volume.
 
@@ -200,12 +261,32 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
   }'
 ```
 
+Expected result:
+
+* HTTP 200
+* Response contains authentication data such as a JWT token.
+
 ## Logs
 
 Show recent gateway logs:
 
 ```bash
 docker compose logs gateway --tail=100
+```
+
+Expected result:
+
+* Recent gateway access/error logs are printed.
+* Successful requests should show status codes such as `200`.
+
+Useful signs:
+
+```txt
+GET /genai/health 200
+POST /api/v1/genai/generate 200
+GET /api/v1/trips/health 200
+POST /api/v1/auth/register 200
+POST /api/v1/auth/login 200
 ```
 
 Follow gateway logs live:
@@ -223,6 +304,11 @@ docker compose logs genai --tail=100
 docker compose logs client --tail=100
 docker compose logs postgres --tail=100
 ```
+
+Expected result:
+
+* The selected service logs are printed.
+* Use these logs to debug startup errors, failed API calls, and routing issues.
 
 ## Troubleshooting
 
@@ -321,6 +407,12 @@ docker compose down -v
 docker compose up --build
 ```
 
+Expected result:
+
+* Containers are recreated.
+* PostgreSQL volume data is removed.
+* Previously registered local users and saved local data are deleted.
+
 ### Rebuild from scratch
 
 If containers behave unexpectedly after dependency or Dockerfile changes, rebuild from scratch:
@@ -329,4 +421,13 @@ If containers behave unexpectedly after dependency or Dockerfile changes, rebuil
 docker compose down -v
 docker compose build --no-cache
 docker compose up
+```
+
+Expected result:
+
+* Old containers and database volumes are removed.
+* Docker images are rebuilt without cache.
+* The local system starts from a clean state.
+
+```
 ```
