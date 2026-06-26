@@ -47,11 +47,21 @@ const FEATURES = [
   },
 ];
 
+const TRIP_TYPE_MAP = {
+  popular:    "TOURISTIC",
+  historical: "HISTORIC",
+  outdoor:    "TOURISTIC",
+  food:       "GASTRONOMIC",
+  mixed:      "MIXED",
+};
+
 function LandingPage() {
   const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [preference, setPreference] = useState("popular");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -256,10 +266,42 @@ function LandingPage() {
           </div>
 
           {/* Submit */}
+          {formError && (
+            <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12, textAlign: "center" }}>{formError}</p>
+          )}
           <button
-            onClick={() => {
-              const p = new URLSearchParams({ destination, start: startDate, end: endDate, preference });
-              navigate(`/itinerary?${p.toString()}`);
+            disabled={submitting}
+            onClick={async () => {
+              setFormError("");
+              if (!destination || !startDate || !endDate) {
+                setFormError("Please fill in destination and dates.");
+                return;
+              }
+              const userId = localStorage.getItem("userId");
+              if (!userId) { navigate("/login"); return; }
+              setSubmitting(true);
+              try {
+                const res = await fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+                  body: JSON.stringify({
+                    userId,
+                    destination,
+                    startDate,
+                    endDate,
+                    tripType: TRIP_TYPE_MAP[preference] || "MIXED",
+                    budget: 0,
+                  }),
+                });
+                if (!res.ok) throw new Error("Could not create trip.");
+                const trip = await res.json();
+                const p = new URLSearchParams({ destination, start: startDate, end: endDate, preference, tripId: trip.id });
+                navigate(`/itinerary?${p.toString()}`);
+              } catch (err) {
+                setFormError(err.message);
+              } finally {
+                setSubmitting(false);
+              }
             }}
             style={{
               width: "100%",
@@ -270,11 +312,12 @@ function LandingPage() {
               borderRadius: 12,
               fontSize: 16,
               fontWeight: 700,
-              cursor: "pointer",
+              cursor: submitting ? "not-allowed" : "pointer",
               letterSpacing: "0.02em",
+              opacity: submitting ? 0.7 : 1,
             }}
           >
-            🔍 &nbsp;Plan My Trip
+            {submitting ? "Creating trip…" : "🔍  Plan My Trip"}
           </button>
         </div>
       </section>
