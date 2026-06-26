@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public record TripResponse(
         UUID id,
-        UUID userId,
+        Long userId,
         String destination,
         LocalDate startDate,
         LocalDate endDate,

@@ -41,7 +41,7 @@ public class TripController {
 
     @GetMapping("/user/{userId}")
     public List<TripResponse> getTripsByUserId(
-            @PathVariable UUID userId) {
+            @PathVariable Long userId) {
 
         return tripService.getTripsByUserId(userId);
     }
