@@ -1,86 +1,173 @@
-## How to Launch the Project Locally
+# How to Launch the Project Locally
 
-This project can be started with Docker Compose. The setup includes the React frontend, auth service, GenAI service, and PostgreSQL database.
+This guide explains how to start the AI Travel Planner locally and test the main user workflow through the frontend.
 
-### Prerequisites
+For detailed infrastructure, gateway routing, database checks, service logs, and troubleshooting, see:
 
-- Docker
+```txt
+infra/README.md
+```
 
-### 1. Clone the Repository
+## Prerequisites
+
+Install:
+
+* Docker
+* Docker Compose plugin
+
+Recommended terminal for command examples:
+
+* Git Bash
+* WSL
+* Linux terminal
+* macOS terminal
+
+The `curl` examples in this project use Unix-style command syntax. On Windows, Git Bash or WSL is recommended.
+
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/AET-DevOps26/team-coffeelovers.git
 cd team-coffeelovers
 ```
 
-### 2. Start the Application
+## 2. Start the Application
 
-From the `infra/` directory:
+From the repository root:
 
 ```bash
 cd infra
 docker compose up --build
 ```
 
-Or from the root directory of the project:
+Or from the repository root without changing directories:
 
 ```bash
 docker compose -f infra/docker-compose.yml up --build
 ```
 
-This command builds and starts all required containers.
+This builds and starts the local application stack.
 
-### 3. Service URLs
+## 3. Open the Frontend
 
-| Service | URL | Description |
-|---|---|---|
-| Client | `http://localhost:3000` | Frontend application |
-| Auth Service | `http://localhost:8081` | Authentication API |
-| GenAI Service | `http://localhost:8001` | GenAI API |
-| PostgreSQL | `localhost:5432` | Database |
+Open the frontend in your browser:
 
-### 4. Test Auth Endpoints
-
-You can test the authentication endpoints with Postman or curl.
-
-#### Register
-
-```http
-POST http://localhost:8081/auth/register
-Content-Type: application/json
-
-{
-  "username": "examplename",
-  "email": "example@example.com",
-  "password": "123456"
-}
+```txt
+http://localhost:3000
 ```
 
-#### Login
+This is the main user-facing application.
 
-```http
-POST http://localhost:8081/auth/login
-Content-Type: application/json
+## 4. Test the Main User Workflow
 
-{
-  "email": "example@example.com",
-  "password": "123456"
-}
+Use the frontend to test the application end to end.
+
+### 4.1 Register a User
+
+1. Open the frontend:
+
+```txt
+http://localhost:3000
 ```
 
-#### Health Checks
+2. Go to the registration page.
+3. Create a local test user.
 
-```http
-GET http://localhost:8081/auth/actuator/health
-GET http://localhost:8001/genai/health
+Example test data:
+
+```txt
+Username: testuser
+Email: testuser@example.com
+Password: Password123!
 ```
 
-### 5. Stop the Application
+If the email already exists, use a different email address or reset the local database volume.
+
+### 4.2 Login
+
+1. Go to the login page.
+2. Login with the user created in the previous step.
+
+Example:
+
+```txt
+Email: testuser@example.com
+Password: Password123!
+```
+
+After login, the frontend should allow access to the trip planning workflow.
+
+### 4.3 Create and Save a Trip
+
+Use the trip planning page in the frontend.
+
+Example trip input:
+
+```txt
+Destination: Maastricht
+Days: 2
+Preferences: old town, food
+Budget: 250 EUR
+```
+
+Submit the form to generate and save the trip.
+
+The frontend should send requests to the backend through the local API Gateway. The backend services then coordinate with the GenAI service and persist trip-related data.
+
+## 5. Useful Local URLs
+
+| URL                          | Purpose                                                           |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `http://localhost:3000`      | Frontend application                                              |
+| `http://localhost:8001/docs` | GenAI Swagger UI                                                  |
+| `http://localhost:8080`      | API Gateway root                                |
+| `http://localhost:8081`      | Auth service direct port               |
+| `http://localhost:8082`      | Trip service direct port
+
+A `404` or `403` on a backend root URL does not necessarily mean the service is broken. Use the frontend or the documented API endpoints for verification.
+
+## 6. Quick API Checks
+
+These checks are optional if the frontend workflow works, but they are useful for debugging.
+
+### GenAI Health
+
+```bash
+curl http://localhost:8080/genai/health
+```
+
+### Trip Service Health
+
+```bash
+curl http://localhost:8080/api/v1/trips/health
+```
+
+## 7. Stop the Application
+
+From the `infra/` directory:
 
 ```bash
 docker compose down
 ```
 
----
+To stop the system and remove local database data:
 
-For Kubernetes deployment instructions, see [infra/helm/README.md](../infra/helm/README.md).
+```bash
+docker compose down -v
+```
+
+Use `docker compose down -v` when you want to reset local test users, saved trips, and database state.
+
+## More Details
+
+For detailed local infrastructure checks, see:
+
+```txt
+infra/README.md
+```
+
+For Kubernetes deployment instructions, see:
+
+```txt
+infra/helm/README.md
+```
