@@ -87,8 +87,7 @@ The use case diagram shows the planned interactions between actors (Visitor, Use
 
 The component diagram visualises how the planned system components are structured and how they will communicate.
 
-> **File:** [diagrams/component-diagram.md](diagrams/component-diagram.md)
-> *(Open with [diagrams.net](https://app.diagrams.net) — use File → Import from → Device)*
+![Component Diagram](diagrams/component_diagram_v2.png)
 
 **Planned components:**
 - **React Frontend** — will communicate with Spring Boot via REST API (lollipop/socket interface)
