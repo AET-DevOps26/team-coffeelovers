@@ -2,7 +2,17 @@
 
 This directory contains the Docker Compose setup for running the AI Travel Planner locally.
 
-The setup includes:
+Use this document for infrastructure-level details: Docker Compose services, API Gateway routing, database checks, service logs, and troubleshooting.
+
+For the short first-time launch guide, see:
+
+```txt
+../docs/how-to-launch.md
+```
+
+## Included Services
+
+The local Docker Compose setup includes:
 
 * PostgreSQL database
 * Auth service
@@ -11,15 +21,15 @@ The setup includes:
 * Frontend client
 * NGINX API Gateway
 
-## Architecture
+## API Gateway Architecture
 
-The API Gateway exposes a single local entrypoint:
+The NGINX API Gateway exposes one local API entrypoint:
 
 ```txt
 http://localhost:8080
 ```
 
-The gateway routes external API paths to the internal services:
+The gateway forwards external API paths to internal Docker Compose services:
 
 | External Path     | Internal Target     |
 | ----------------- | ------------------- |
@@ -37,11 +47,39 @@ trip-service: /trips/*
 
 The gateway rewrites the external versioned paths to the internal service paths.
 
-GenAI already exposes versioned paths directly:
+GenAI already exposes versioned API paths directly:
 
 ```txt
 genai: /api/v1/genai/*
 ```
+
+## Local URLs
+
+| URL                          | Purpose                                                           |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `http://localhost:3000`      | Frontend application                                              |
+| `http://localhost:8001/docs` | GenAI Swagger UI                                                  |
+| `http://localhost:8080`      | API Gateway root; may return `404`                                |
+| `http://localhost:8081`      | Auth service direct port; may return `403` or `404`               |
+| `http://localhost:8082`      | Trip service direct port; may return Spring Boot Whitelabel `404` |
+| `localhost:5432`             | PostgreSQL database port                                          |
+
+A `404` or `403` on a backend root URL does not necessarily mean the service is broken. Use the frontend or the documented API endpoints for verification.
+
+## Terminal Recommendation
+
+The command examples use `curl`.
+
+Recommended terminals:
+
+* Git Bash
+* WSL
+* Linux terminal
+* macOS terminal
+
+The multiline `curl` examples use `\` for line continuation. This works in Unix-style shells, but not directly in Windows PowerShell.
+
+If you are using Windows, run the examples from Git Bash or WSL.
 
 ## Start the System
 
@@ -51,53 +89,48 @@ From this directory:
 docker compose up --build
 ```
 
-To stop the system:
+Or from the repository root:
+
+```bash
+docker compose -f infra/docker-compose.yml up --build
+```
+
+## Stop the System
+
+From this directory:
 
 ```bash
 docker compose down
 ```
 
-To stop the system and remove database volumes:
+To stop the system and remove local database volumes:
 
 ```bash
 docker compose down -v
 ```
 
-## Verify Running Services
+Use `docker compose down -v` when you want to reset local test data.
 
-List services:
+## Check Docker Compose Services
+
+List configured services:
 
 ```bash
 docker compose config --services
 ```
 
-Expected services:
-
-```txt
-postgres
-auth-service
-client
-genai
-trip-service
-gateway
-```
-
-Check container status:
+Check running containers:
 
 ```bash
 docker compose ps
 ```
 
-## Verify PostgreSQL
+## Check PostgreSQL
+
+Check database readiness:
 
 ```bash
 docker compose exec postgres pg_isready -U coffeelovers
-```
-
-Expected result:
-
-```txt
-accepting connections
 ```
 
 List database tables:
@@ -106,14 +139,13 @@ List database tables:
 docker compose exec postgres psql -U coffeelovers -d coffeelovers -c "\dt"
 ```
 
-Expected tables include:
+## Check API Gateway Routes
+
+Use the API Gateway for local API testing:
 
 ```txt
-auth_users
-trips
+http://localhost:8080
 ```
-
-## Verify Gateway Routing
 
 ### GenAI Health
 
@@ -121,152 +153,111 @@ trips
 curl http://localhost:8080/genai/health
 ```
 
-Expected result:
+### Trip Health
 
-```json
-{
-  "status": "ok",
-  "service": "genai",
-  "version": "1.0.0"
-}
+```bash
+curl http://localhost:8080/api/v1/trips/health
 ```
 
 ### GenAI Generate
 
-PowerShell:
-
-```powershell
-$genaiBody = @{
-  destination = "Maastricht"
-  days = 2
-  preferences = @("old town", "food")
-  budget = @{
-    amount = 250
-    currency = "EUR"
-  }
-} | ConvertTo-Json -Depth 5
-
-$response = Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/v1/genai/generate" `
-  -Method Post `
-  -ContentType "application/json" `
-  -Body $genaiBody
-
-$response | ConvertTo-Json -Depth 10
-```
-
-Expected result:
-
-* HTTP 200
-* Response contains `summary`
-* Response contains `itinerary`
-* Response contains `activities`
-
-### Trip Health
-
-PowerShell:
-
-```powershell
-Invoke-RestMethod -Uri "http://localhost:8080/api/v1/trips/health" -Method Get
-```
-
-Expected result:
-
-```json
-{
-  "status": "UP",
-  "service": "trip-service"
-}
+```bash
+curl -X POST http://localhost:8080/api/v1/genai/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "destination": "Maastricht",
+    "days": 2,
+    "preferences": ["old town", "food"],
+    "budget": {
+      "amount": 250,
+      "currency": "EUR"
+    }
+  }'
 ```
 
 ### Auth Register
 
-PowerShell:
-
-```powershell
-$registerBody = @{
-  username = "testuser"
-  email = "testuser@example.com"
-  password = "Password123!"
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/v1/auth/register" `
-  -Method Post `
-  -ContentType "application/json" `
-  -Body $registerBody
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "email": "testuser@example.com",
+    "password": "Password123!"
+  }'
 ```
 
-Expected result:
-
-* HTTP 200
-* Response contains a JWT token
+If the same email was already registered, use a different email address or reset the local database volume.
 
 ### Auth Login
 
-PowerShell:
-
-```powershell
-$loginBody = @{
-  email = "testuser@example.com"
-  password = "Password123!"
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-  -Uri "http://localhost:8080/api/v1/auth/login" `
-  -Method Post `
-  -ContentType "application/json" `
-  -Body $loginBody
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "testuser@example.com",
+    "password": "Password123!"
+  }'
 ```
 
-Expected result:
+## Logs
 
-* HTTP 200
-* Response contains a JWT token
-
-## Gateway Logs
+Show recent gateway logs:
 
 ```bash
 docker compose logs gateway --tail=100
 ```
 
-Useful signs:
+Follow gateway logs live:
 
-```txt
-GET /genai/health 200
-POST /api/v1/genai/generate 200
-GET /api/v1/trips/health 200
-POST /api/v1/auth/register 200
-POST /api/v1/auth/login 200
+```bash
+docker compose logs -f gateway
+```
+
+Show recent logs for individual services:
+
+```bash
+docker compose logs auth-service --tail=100
+docker compose logs trip-service --tail=100
+docker compose logs genai --tail=100
+docker compose logs client --tail=100
+docker compose logs postgres --tail=100
 ```
 
 ## Troubleshooting
 
-### PowerShell `curl` issue
+### Browser shows 404 or 403
 
-On Windows PowerShell, `curl` may point to `Invoke-WebRequest`, not the real curl binary.
+This can be normal for API-only services.
 
-Use either:
+Use these pages for browser checks:
 
-```powershell
-curl.exe http://localhost:8080/genai/health
+```txt
+http://localhost:3000
+http://localhost:8001/docs
 ```
 
-or:
+Use API endpoints for backend checks:
 
-```powershell
-Invoke-RestMethod -Uri "http://localhost:8080/genai/health" -Method Get
+```bash
+curl http://localhost:8080/genai/health
+curl http://localhost:8080/api/v1/trips/health
 ```
 
-### Truncated nested JSON output
+### Windows PowerShell and curl
 
-PowerShell may display nested JSON objects in a shortened table format.
+The `curl` examples in this document use Unix-style line continuation with `\`.
 
-Use:
+This works in:
 
-```powershell
-$response | ConvertTo-Json -Depth 10
-```
+* Git Bash
+* WSL
+* Linux terminal
+* macOS terminal
+
+It does not work directly in Windows PowerShell.
+
+For Windows users, Git Bash or WSL is recommended for the JSON POST examples.
 
 ### Auth or Trip path mismatch
 
@@ -286,13 +277,56 @@ Internally, the services currently expose:
 
 The gateway handles this with rewrite rules.
 
+### GenAI path mismatch
+
+The GenAI service exposes versioned paths directly:
+
+```txt
+/api/v1/genai/*
+```
+
+Through the gateway, use:
+
+```txt
+http://localhost:8080/api/v1/genai/*
+```
+
+For health checks, use:
+
+```txt
+http://localhost:8080/genai/health
+```
+
+### Port already in use
+
+If a container fails because a port is already in use, check whether another local process is using one of these ports:
+
+* `3000`
+* `5432`
+* `8001`
+* `8080`
+* `8081`
+* `8082`
+
+Stop the conflicting process or change the local port mapping in Docker Compose.
+
 ### Reset local test data
 
 Do not commit real API keys, JWT tokens, passwords, or private credentials.
 
-Test users created through the local database can be removed by resetting Docker volumes:
+Test users and database records created locally can be removed by resetting Docker volumes:
 
 ```bash
 docker compose down -v
 docker compose up --build
+```
+
+### Rebuild from scratch
+
+If containers behave unexpectedly after dependency or Dockerfile changes, rebuild from scratch:
+
+```bash
+docker compose down -v
+docker compose build --no-cache
+docker compose up
 ```
