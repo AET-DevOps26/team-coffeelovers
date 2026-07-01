@@ -45,7 +45,7 @@ public class TripService {
                 .toList();
     }
 
-    public List<TripResponse> getTripsByUserId(UUID userId) {
+    public List<TripResponse> getTripsByUserId(Long userId) {
         return tripRepository.findByUserId(userId)
                 .stream()
                 .map(tripMapper::toResponse)
