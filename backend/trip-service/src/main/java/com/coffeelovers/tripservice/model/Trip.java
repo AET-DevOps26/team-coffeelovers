@@ -15,7 +15,7 @@ public class Trip {
     private UUID id;
 
     @Column(nullable = false)
-    private UUID userId;
+    private Long userId;
 
     @Column(nullable = false)
     private String destination;
@@ -47,7 +47,7 @@ public class Trip {
     }
 
     public static Trip create(
-        UUID userId,
+        Long userId,
         String destination,
         LocalDate startDate,
         LocalDate endDate,
@@ -81,11 +81,11 @@ public class Trip {
     return id;
     }
 
-    public UUID getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(UUID userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 

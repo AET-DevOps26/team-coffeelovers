@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TripRepository extends JpaRepository<Trip, UUID> {
 
-    List<Trip> findByUserId(UUID userId);
-
     List<Trip> findByStatus(TripStatus status);
 
-    List<Trip> findByUserIdAndStatus(UUID userId, TripStatus status);
+    List<Trip> findByUserId(Long userId);
+
+    List<Trip> findByUserIdAndStatus(Long userId, TripStatus status);
 }
