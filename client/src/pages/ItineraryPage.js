@@ -5,72 +5,29 @@ import "leaflet/dist/leaflet.css";
 import Navbar from "../components/NavBar";
 
 // ---------------------------------------------------------------------------
-// Mock itinerary — same shape the AI service will eventually return
-// ---------------------------------------------------------------------------
-const MOCK_ITINERARY = {
-  days: [
-    {
-      day: 1,
-      title: "Gothic Quarter & La Rambla",
-      activities: [
-        {
-          id: 1,
-          name: "La Sagrada Família",
-          description: "Start your adventure at Gaudí's masterpiece. Book tickets in advance to avoid long queues.",
-          time: "9:00 AM",
-          duration: "2-3 hours",
-          period: "MORNING",
-        },
-        {
-          id: 2,
-          name: "Casa Batlló",
-          description: "Another Gaudí marvel on Passeig de Gràcia, featuring stunning architecture and rooftop views.",
-          time: "11:30 AM",
-          duration: "1.5 hours",
-          period: "MORNING",
-        },
-        {
-          id: 3,
-          name: "Gothic Quarter Walking Tour",
-          description: "Explore the narrow medieval streets, visit the Barcelona Cathedral, and discover hidden squares.",
-          time: "2:00 PM",
-          duration: "2 hours",
-          period: "AFTERNOON",
-        },
-        {
-          id: 4,
-          name: "La Boqueria Market",
-          description: "Famous market on La Rambla with fresh produce, tapas, and local specialties.",
-          time: "4:30 PM",
-          duration: "1 hour",
-          period: "AFTERNOON",
-        },
-      ],
-    },
-    {
-      day: 2,
-      title: "Barceloneta & Park Güell",
-      activities: [
-        {
-          id: 5,
-          name: "Park Güell",
-          description: "Explore Gaudí's colorful mosaic park with panoramic views over the city.",
-          time: "9:00 AM",
-          duration: "2 hours",
-          period: "MORNING",
-        },
-        {
-          id: 6,
-          name: "Barceloneta Beach",
-          description: "Relax on Barcelona's most famous beach and enjoy fresh seafood at a beachfront restaurant.",
-          time: "12:00 PM",
-          duration: "2 hours",
-          period: "AFTERNOON",
-        },
-      ],
-    },
-  ],
-};
+function assignPeriod(index, total) {
+  const third = Math.ceil(total / 3);
+  if (index < third) return "MORNING";
+  if (index < third * 2) return "AFTERNOON";
+  return "EVENING";
+}
+
+function mapGenaiResponse(data) {
+  return {
+    days: data.itinerary.map(day => ({
+      day: day.day,
+      title: day.title,
+      activities: day.activities.map((act, i) => ({
+        id: `${day.day}-${i}`,
+        name: act.title,
+        description: act.description || "",
+        duration: act.estimatedDuration || "1 hour",
+        period: assignPeriod(i, day.activities.length),
+        time: "",
+      })),
+    })),
+  };
+}
 
 // ---------------------------------------------------------------------------
 const PERIOD_START_MINUTES = { MORNING: 9 * 60, AFTERNOON: 13 * 60, EVENING: 18 * 60 };
@@ -122,12 +79,33 @@ export default function ItineraryPage() {
   const preference  = searchParams.get("preference")  || location.state?.preference || "popular";
   const preferenceLabel = PREFERENCE_LABELS[preference] || preference;
 
-  const [itinerary, setItinerary] = useState(MOCK_ITINERARY);
+  const [itinerary, setItinerary] = useState(null);
+  const [genaiLoading, setGenaiLoading] = useState(true);
+  const [genaiError, setGenaiError] = useState(null);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [mapZoom] = useState(13);
   const [toast, setToast] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
+
+  useEffect(() => {
+    const days = (startDate && endDate)
+      ? Math.max(1, Math.round((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1)
+      : 3;
+    fetch(`${process.env.REACT_APP_GENAI_API_URL}/api/v1/genai/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        destination,
+        days,
+        preferences: [preference],
+        budget: { amount: 0, currency: "EUR" },
+      }),
+    })
+      .then(r => { if (!r.ok) throw new Error(`GenAI error ${r.status}`); return r.json(); })
+      .then(data => { setItinerary(mapGenaiResponse(data)); setGenaiLoading(false); })
+      .catch(err => { setGenaiError(err.message); setGenaiLoading(false); });
+  }, [destination, startDate, endDate, preference]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -180,6 +158,7 @@ export default function ItineraryPage() {
   const handleSave = () => {
     const token = localStorage.getItem("token");
     if (!token) { navigate("/login"); return; }
+    if (!itinerary) { showToast("Itinerary still loading…"); return; }
     const saved = JSON.parse(localStorage.getItem("savedPlans") || "[]");
     const plan = { id: Date.now(), destination, startDate, endDate, preference, createdAt: new Date().toISOString().slice(0,10), itinerary };
     const already = saved.findIndex(p => p.destination === destination && p.startDate === startDate && p.endDate === endDate);
@@ -345,7 +324,17 @@ export default function ItineraryPage() {
         </div>
 
         {/* ── Days ── */}
-        {itinerary.days.map((day, dayIndex) => (
+        {genaiLoading && (
+          <div style={{ textAlign: "center", padding: "48px 0", color: "#6b7280", fontSize: 15 }}>
+            Generating your itinerary with AI…
+          </div>
+        )}
+        {genaiError && (
+          <div style={{ textAlign: "center", padding: "48px 0", color: "#dc2626", fontSize: 15 }}>
+            Could not generate itinerary: {genaiError}
+          </div>
+        )}
+        {itinerary && itinerary.days.map((day, dayIndex) => (
           <DayCard
             key={day.day}
             day={day}

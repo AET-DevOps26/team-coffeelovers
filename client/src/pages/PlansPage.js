@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const PREFERENCE_LABELS = {
@@ -17,11 +17,12 @@ const PREFERENCE_IMAGES = {
   mixed: "/images/mixed-trip.jpg",
 };
 
-const SAMPLE_PLANS = [
-  { id: 1, destination: "Paris", startDate: "2026-05-01", endDate: "2026-05-05", preference: "popular", createdAt: "2026-05-01" },
-  { id: 2, destination: "Rome", startDate: "2026-04-28", endDate: "2026-05-01", preference: "historical", createdAt: "2026-04-28" },
-  { id: 3, destination: "Barcelona", startDate: "2026-04-25", endDate: "2026-04-27", preference: "mixed", createdAt: "2026-04-25" },
-];
+const TRIP_TYPE_TO_PREFERENCE = {
+  TOURISTIC:   "popular",
+  HISTORIC:    "historical",
+  GASTRONOMIC: "food",
+  MIXED:       "mixed",
+};
 
 function getDays(startDate, endDate) {
   if (!startDate || !endDate) return null;
@@ -31,10 +32,31 @@ function getDays(startDate, endDate) {
 
 export default function PlansPage() {
   const [tab, setTab] = useState("mine");
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const saved = JSON.parse(localStorage.getItem("savedPlans") || "[]");
-  const plans = saved.length > 0 ? saved : SAMPLE_PLANS;
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) { setLoading(false); return; }
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/user/${userId}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
+      .then(data => {
+        setPlans(data.map(t => ({
+          id: t.id,
+          destination: t.destination,
+          startDate: t.startDate,
+          endDate: t.endDate,
+          preference: TRIP_TYPE_TO_PREFERENCE[t.tripType] || "mixed",
+          createdAt: t.createdAt ? t.createdAt.slice(0, 10) : "",
+        })));
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   return (
     <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", padding: "32px 36px", background: "#f9fafb", minHeight: "100vh" }}>
@@ -60,6 +82,12 @@ export default function PlansPage() {
 
       {tab === "shared" ? (
         <p style={{ color: "#9ca3af", fontSize: 14 }}>No plans have been shared with you yet.</p>
+      ) : loading ? (
+        <p style={{ color: "#6b7280", fontSize: 14 }}>Loading your plans…</p>
+      ) : error ? (
+        <p style={{ color: "#dc2626", fontSize: 14 }}>Could not load plans: {error}</p>
+      ) : plans.length === 0 ? (
+        <p style={{ color: "#9ca3af", fontSize: 14 }}>No trips yet. <a href="/" style={{ color: "#c0622a", fontWeight: 600 }}>Plan your first trip!</a></p>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 24 }}>
           {plans.map(plan => {
@@ -90,7 +118,7 @@ export default function PlansPage() {
                   )}
                   <button
                     onClick={() => {
-                      const p = new URLSearchParams({ destination: plan.destination, start: plan.startDate, end: plan.endDate, preference: plan.preference });
+                      const p = new URLSearchParams({ destination: plan.destination, start: plan.startDate, end: plan.endDate, preference: plan.preference, tripId: plan.id });
                       navigate(`/itinerary?${p.toString()}`);
                     }}
                     style={{
