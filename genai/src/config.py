@@ -1,11 +1,8 @@
 """
 Configuration helpers for the GenAI service.
 
-The GenAI service must support multiple provider modes. This module reads
-provider-related settings from environment variables and keeps configuration
-separate from API routes and business logic.
-
-No secrets should be hardcoded in this file.
+This module reads provider-related settings from environment variables.
+No secrets should be hardcoded here.
 """
 
 import os
@@ -58,7 +55,7 @@ def get_settings() -> GenAISettings:
         log_level=os.getenv("GENAI_LOG_LEVEL", "INFO"),
         openai_api_key=os.getenv("OPENAI_API_KEY", ""),
         openai_base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-        openai_model=os.getenv("OPENAI_MODEL", ""),
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         logos_api_key=os.getenv("LOGOS_API_KEY", ""),
         logos_base_url=os.getenv("LOGOS_BASE_URL", "https://logos.aet.cit.tum.de/v1"),
         logos_model=os.getenv("LOGOS_MODEL", "openai/gpt-oss-120b"),

@@ -48,12 +48,6 @@ def test_factory_creates_openai_provider():
 
     assert isinstance(provider, OpenAIProvider)
 
-
-def test_factory_rejects_openai_until_provider_is_implemented():
-    with pytest.raises(NotImplementedError, match="OpenAI provider"):
-        create_provider(_settings_for(GenAIProvider.OPENAI))
-
-
 def test_factory_rejects_logos_until_provider_is_implemented():
     with pytest.raises(NotImplementedError, match="Logos provider"):
         create_provider(_settings_for(GenAIProvider.LOGOS))
