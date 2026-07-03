@@ -1,17 +1,43 @@
 # GenAI Service
 
-Initial Python/FastAPI microservice for the AI Travel Planner project.
+The GenAI service is the independent Python/FastAPI microservice of the AI Travel Planner project.
 
-This service is currently a minimal foundation for future GenAI features. It provides a basic FastAPI application, a health check endpoint, Dockerfile support, and initial dependency setup.
+It exposes API endpoints used to generate travel itineraries and travel-related suggestions. The service is designed to support multiple generation providers through a provider-based architecture.
+
+The default provider is a deterministic mock provider, so the service can run locally and in CI without external API keys. OpenAI support can be enabled explicitly through environment variables.
+
+## Purpose
+
+The GenAI service is responsible for:
+
+* generating personalized day-by-day travel itineraries,
+* supporting a stable API contract for backend integration,
+* keeping LLM provider logic separate from FastAPI route handlers,
+* supporting mock-based local development and CI,
+* preparing the project for OpenAI, Logos, and future local model providers.
 
 ## Structure
 
 ```txt
 genai/
 ├── src/
-│   └── main.py
+│   ├── main.py
+│   ├── config.py
+│   ├── prompts.py
+│   ├── schemas.py
+│   ├── providers/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── factory.py
+│   │   ├── mock_provider.py
+│   │   └── openai_provider.py
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   └── genai.py
+│   └── services/
+│       ├── __init__.py
+│       └── itinerary_service.py
 ├── tests/
-├── docs/
 ├── requirements.txt
 ├── .env.example
 ├── .gitignore
@@ -23,158 +49,440 @@ genai/
 
 * Python 3.12
 * pip
-* Docker, optional for containerized run
+* Docker, optional for containerized execution
 
 ## Local Setup
 
-Create and activate a virtual environment from the project root:
+Create and activate a virtual environment from the repository root:
 
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\activate
+```bash
+python -m venv .venv
+source .venv/Scripts/activate
+```
+
+On Windows PowerShell, activation can also be done with:
+
+```bash
+.venv/Scripts/activate
 ```
 
 Install dependencies:
 
-```powershell
-pip install -r genai\requirements.txt
+```bash
+pip install -r genai/requirements.txt
 ```
 
 Run the service locally:
 
-```powershell
-cd genai\src
-python main.py
+```bash
+cd genai
+uvicorn src.main:app --reload --port 8001
 ```
 
 The service runs on:
 
-```txt
+```bash
 http://127.0.0.1:8001
+```
+
+Swagger UI is available at:
+
+```bash
+http://127.0.0.1:8001/docs
 ```
 
 ## Available Endpoints
 
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/genai/` | Returns basic service information |
-| GET | `/genai/health` | Returns service health status |
-| POST | `/api/v1/genai/generate` | Generates a personalized day-by-day itinerary |
-| POST | `/api/v1/genai/suggest` | Suggests travel preferences and activity ideas |
-| GET | `/docs` | Opens FastAPI Swagger documentation |
+| Method | Endpoint                 | Description                                    |
+| ------ | ------------------------ | ---------------------------------------------- |
+| GET    | `/genai/health`          | Returns service health status                  |
+| POST   | `/api/v1/genai/generate` | Generates a personalized day-by-day itinerary  |
+| POST   | `/api/v1/genai/suggest`  | Suggests travel preferences and activity ideas |
+| GET    | `/docs`                  | Opens FastAPI Swagger documentation            |
 
-## Docker Usage
+## API Gateway Access
 
-Build the Docker image:
+When the full local stack is running through Docker Compose, the recommended local entrypoint is the API Gateway:
 
-```powershell
-cd genai
-docker build -t genai-service .
+```bash
+http://localhost:8080
 ```
 
-Run the container:
+Gateway routes:
 
-```powershell
-docker run --rm -p 8001:8001 genai-service
+| External Route    | Internal Target |
+| ----------------- | --------------- |
+| `/api/v1/genai/*` | `genai:8001`    |
+| `/genai/health`   | `genai:8001`    |
+
+From the host machine, use:
+
+```bash
+http://localhost:8080/api/v1/genai/generate
 ```
 
-Then open:
+Inside Docker Compose, other services can reach GenAI directly through the compose service name:
 
-```txt
-http://127.0.0.1:8001/genai/
-http://127.0.0.1:8001/genai/health
+```bash
+http://genai:8001
 ```
 
-## Environment Variables
+For example, backend service-to-service calls should use:
 
-Copy the example environment file if local configuration is needed:
-
-```powershell
-cd genai
-Copy-Item .env.example .env
+```bash
+http://genai:8001/api/v1/genai/generate
 ```
-
-Current placeholders:
-
-```env
-OPENAI_API_KEY=
-LLM_MODEL=gpt-3.5-turbo
-LOG_LEVEL=INFO
-```
-
-The current minimal service does not require these variables yet. They are included as placeholders for future LLM integration.
 
 ## Provider Configuration
 
 The GenAI service supports provider selection through environment variables.
 
-Current supported runtime mode:
-
-| Provider | Status | Description |
-|---|---|---|
-| `mock` | Implemented | Deterministic local provider for development, testing, and CI |
-| `openai` | Planned | OpenAI-compatible cloud provider |
-| `logos` | Planned | TUM Logos OpenAI-compatible provider |
+| Provider | Status      | Description                                                   |
+| -------- | ----------- | ------------------------------------------------------------- |
+| `mock`   | Implemented | Deterministic local provider for development, testing, and CI |
+| `openai` | Implemented | OpenAI provider through LangChain                             |
+| `logos`  | Planned     | TUM Logos OpenAI-compatible provider                          |
 
 Default mode:
 
 ```env
 GENAI_PROVIDER=mock
+```
+
+Mock mode does not require any API key.
+
+## Environment Variables
+
+Copy the example environment file if local configuration is needed:
+
+```bash
+cd genai
+cp .env.example .env
+```
+
+Recommended `.env.example` values:
+
+```env
+GENAI_PROVIDER=mock
+GENAI_LOG_LEVEL=INFO
+
+OPENAI_API_KEY=
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4o-mini
+
+LOGOS_API_KEY=
+LOGOS_BASE_URL=https://logos.aet.cit.tum.de/v1
+LOGOS_MODEL=openai/gpt-oss-120b
+```
+
+Do not commit real API keys, JWT tokens, or private credentials.
+
+## Mock Provider
+
+The mock provider is the default provider.
+
+It is used for:
+
+* local development,
+* CI tests,
+* backend integration before external LLM providers are enabled,
+* deterministic API contract verification.
+
+Run with mock provider:
+
+```bash
+cd genai
+GENAI_PROVIDER=mock uvicorn src.main:app --reload --port 8001
+```
+
+## OpenAI Provider
+
+The OpenAI provider uses LangChain and `langchain-openai`.
+
+To test OpenAI locally, set the required environment variables:
+
+```bash
+export GENAI_PROVIDER=openai
+export OPENAI_API_KEY="<your-local-api-key>"
+export OPENAI_BASE_URL="https://api.openai.com/v1"
+export OPENAI_MODEL="gpt-4o-mini"
+```
+
+Then run:
+
+```bash
+cd genai
+uvicorn src.main:app --reload --port 8001
+```
+
+Do not print, commit, or share the real API key.
+
+Unit tests do not call the real OpenAI API. OpenAI provider tests use fake or mocked chat models.
+
+## Logos Provider
+
+Logos support is planned as a future provider.
+
+Expected configuration:
+
+```env
+GENAI_PROVIDER=logos
+LOGOS_API_KEY=
+LOGOS_BASE_URL=https://logos.aet.cit.tum.de/v1
+LOGOS_MODEL=openai/gpt-oss-120b
+```
+
+Logos requires access to the TUM network or eduVPN.
+
+## Docker Usage
+
+Build the Docker image:
+
+```bash
+cd genai
+docker build -t genai-service .
+```
+
+Run the container in mock mode:
+
+```bash
+docker run --rm -p 8001:8001 \
+  -e GENAI_PROVIDER=mock \
+  genai-service
+```
+
+Run the container with OpenAI enabled:
+
+```bash
+docker run --rm -p 8001:8001 \
+  -e GENAI_PROVIDER=openai \
+  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+  -e OPENAI_BASE_URL="https://api.openai.com/v1" \
+  -e OPENAI_MODEL="gpt-4o-mini" \
+  genai-service
+```
+
+Then open:
+
+```bash
+http://127.0.0.1:8001/genai/health
+http://127.0.0.1:8001/docs
+```
 
 ## Docker Compose
 
-The GenAI service can be added to `docker-compose.yml` as an independent service:
+The GenAI service is included in the local Docker Compose setup under `infra/docker-compose.yml`.
 
-```yaml
-genai:
-  build:
-    context: ../genai
-    dockerfile: Dockerfile
-  ports:
-    - "8001:8001"
-  environment:
-    - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-    - LLM_MODEL=${LLM_MODEL:-gpt-3.5-turbo}
-    - LOG_LEVEL=${LOG_LEVEL:-INFO}
-  restart: unless-stopped
+The service defaults to mock mode:
+
+```env
+GENAI_PROVIDER=mock
 ```
 
-The service does not currently require `depends_on` because it does not depend on PostgreSQL or any backend service yet.
+This keeps the full local stack reproducible without requiring external API keys.
 
-Inside the Docker Compose network, other services can reach the GenAI service with:
+To run the full stack:
 
-```txt
-http://genai:8001/genai/
+```bash
+cd infra
+docker compose up --build
 ```
 
-From the local browser, the service is available at:
+To test OpenAI through Docker Compose, export the variables before starting the stack:
 
-```txt
-http://localhost:8001/genai/
+```bash
+export GENAI_PROVIDER=openai
+export OPENAI_API_KEY="<your-local-api-key>"
+export OPENAI_BASE_URL="https://api.openai.com/v1"
+export OPENAI_MODEL="gpt-4o-mini"
+
+cd infra
+docker compose up --build genai
 ```
 
-## Verification Commands
+For deployed environments, `OPENAI_API_KEY` must be provided through secrets, not committed files.
+
+## Kubernetes and Azure Notes
+
+For Kubernetes, Azure, or other deployed environments:
+
+* keep `GENAI_PROVIDER=mock` unless OpenAI should be enabled,
+* provide `OPENAI_API_KEY` through Kubernetes Secrets, GitHub Actions Secrets, Azure Key Vault, or another secure secret mechanism,
+* do not put real API keys in Helm values, Terraform files, Ansible files, README files, or committed `.env` files.
+
+Example non-secret environment configuration:
+
+```env
+GENAI_PROVIDER=mock
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4o-mini
+```
+
+Secret value:
+
+```env
+OPENAI_API_KEY=<provided-through-secret-management>
+```
+
+## Run Tests
 
 Install dependencies:
 
-pip install -r genai\requirements.txt
-
-Run locally:
-
-cd genai\src
-python main.py
-
-Build Docker image:
-
+```bash
 cd genai
-docker build -t genai-service .
+pip install -r requirements.txt
+```
 
-Run Docker container:
+Run tests:
 
-docker run --rm -p 8001:8001 genai-service
+```bash
+pytest
+```
 
-Test endpoints:
+Expected result:
 
-http://127.0.0.1:8001/genai/
-http://127.0.0.1:8001/genai/health
-http://127.0.0.1:8001/docs
+```bash
+All tests pass.
+```
+
+The test suite verifies:
+
+* health endpoint behavior,
+* mock generate endpoint behavior,
+* mock suggest endpoint behavior,
+* request validation errors,
+* provider configuration,
+* prompt formatting,
+* OpenAI provider behavior with fake models.
+
+Tests must not call the real OpenAI API.
+
+## Manual Endpoint Verification
+
+Start the service locally:
+
+```bash
+cd genai
+uvicorn src.main:app --reload --port 8001
+```
+
+Health check:
+
+```bash
+curl http://127.0.0.1:8001/genai/health
+```
+
+Generate itinerary:
+
+```bash
+curl -X POST http://127.0.0.1:8001/api/v1/genai/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "destination": "Maastricht",
+    "days": 2,
+    "preferences": ["old town", "food"],
+    "budget": {
+      "amount": 250,
+      "currency": "EUR"
+    }
+  }'
+```
+
+Expected result:
+
+* HTTP 200
+* response contains `summary`
+* response contains `itinerary`
+* response contains `activities`
+
+## Gateway Verification
+
+With Docker Compose running from `infra/`:
+
+```bash
+curl http://localhost:8080/genai/health
+```
+
+Generate through the gateway:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/genai/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "destination": "Maastricht",
+    "days": 2,
+    "preferences": ["old town", "food"],
+    "budget": {
+      "amount": 250,
+      "currency": "EUR"
+    }
+  }'
+```
+
+## Troubleshooting
+
+### OpenAI API key missing
+
+If `GENAI_PROVIDER=openai` is set but no API key is provided, the service should fail clearly with an error explaining that `OPENAI_API_KEY` is required.
+
+Fix:
+
+```bash
+export OPENAI_API_KEY="<your-local-api-key>"
+```
+
+Or switch back to mock mode:
+
+```bash
+export GENAI_PROVIDER=mock
+```
+
+### OpenAI quota or billing error
+
+If OpenAI returns a quota or billing error, check the OpenAI Platform billing and usage settings.
+
+Mock mode can still be used without API access:
+
+```bash
+export GENAI_PROVIDER=mock
+```
+
+### Docker Compose service URL confusion
+
+From the host machine, use:
+
+```bash
+http://localhost:8080/api/v1/genai/generate
+```
+
+Inside Docker Compose, use:
+
+```bash
+http://genai:8001/api/v1/genai/generate
+```
+
+Do not use `localhost:8001` from another container, because `localhost` inside a container refers to that same container.
+
+### Reset local Docker data
+
+To stop the local stack:
+
+```bash
+cd infra
+docker compose down
+```
+
+To remove local database volumes as well:
+
+```bash
+docker compose down -v
+```
+
+## Development Notes
+
+* Keep the FastAPI route handlers independent from provider-specific code.
+* Use the provider factory to select the active provider.
+* Keep mock mode as the default provider.
+* Do not require OpenAI credentials for CI.
+* Do not make real external API calls in unit tests.
+* Keep the OpenAPI contract aligned with `api/openapi.yaml`.

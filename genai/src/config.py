@@ -28,9 +28,9 @@ class GenAISettings:
     provider: GenAIProvider
     log_level: str
 
-    openai_api_key: str
-    openai_base_url: str
-    openai_model: str
+    openai_api_key=os.getenv("OPENAI_API_KEY", ""),
+    openai_base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+    openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
 
     logos_api_key: str
     logos_base_url: str
