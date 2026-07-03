@@ -302,28 +302,6 @@ docker compose up --build genai
 
 For deployed environments, `OPENAI_API_KEY` must be provided through secrets, not committed files.
 
-## Kubernetes and Azure Notes
-
-For Kubernetes, Azure, or other deployed environments:
-
-* keep `GENAI_PROVIDER=mock` unless OpenAI should be enabled,
-* provide `OPENAI_API_KEY` through Kubernetes Secrets, GitHub Actions Secrets, Azure Key Vault, or another secure secret mechanism,
-* do not put real API keys in Helm values, Terraform files, Ansible files, README files, or committed `.env` files.
-
-Example non-secret environment configuration:
-
-```env
-GENAI_PROVIDER=mock
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_MODEL=gpt-4o-mini
-```
-
-Secret value:
-
-```env
-OPENAI_API_KEY=<provided-through-secret-management>
-```
-
 ## Run Tests
 
 Install dependencies:
