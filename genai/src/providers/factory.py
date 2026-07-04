@@ -1,14 +1,12 @@
 """
 Provider factory for the GenAI service.
 
-This module decides which provider implementation should be used based on the
-runtime configuration. For now, only the mock provider is implemented. OpenAI
-and Logos are recognized as valid provider modes but will be implemented in a
-separate ticket.
+The factory selects the active provider from runtime configuration.
 """
 
 from src.config import GenAIProvider, GenAISettings, get_settings
 from src.providers.mock_provider import MockProvider
+from src.providers.openai_provider import OpenAIProvider
 
 
 def create_provider(settings: GenAISettings | None = None):
@@ -20,17 +18,16 @@ def create_provider(settings: GenAISettings | None = None):
         return MockProvider()
 
     if active_settings.provider == GenAIProvider.OPENAI:
-        raise NotImplementedError(
-            "GENAI_PROVIDER=openai is configured, but the OpenAI provider is "
-            "not implemented yet. Use GENAI_PROVIDER=mock until the OpenAI "
-            "provider ticket is completed."
+        return OpenAIProvider(
+            api_key=active_settings.openai_api_key,
+            model=active_settings.openai_model,
+            base_url=active_settings.openai_base_url,
         )
 
     if active_settings.provider == GenAIProvider.LOGOS:
         raise NotImplementedError(
             "GENAI_PROVIDER=logos is configured, but the Logos provider is "
-            "not implemented yet. Use GENAI_PROVIDER=mock until the Logos "
-            "provider ticket is completed."
+            "not implemented yet. Use GENAI_PROVIDER=mock or openai."
         )
 
     raise ValueError(f"Unsupported GenAI provider: {active_settings.provider}")
