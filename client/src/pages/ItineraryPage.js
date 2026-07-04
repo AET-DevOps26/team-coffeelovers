@@ -83,6 +83,7 @@ export default function ItineraryPage() {
   const [itinerary, setItinerary] = useState(null);
   const [genaiLoading, setGenaiLoading] = useState(true);
   const [genaiError, setGenaiError] = useState(null);
+  const [suggestingId, setSuggestingId] = useState(null);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [mapZoom] = useState(13);
   const [toast, setToast] = useState(null);
@@ -111,6 +112,39 @@ export default function ItineraryPage() {
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  };
+
+  const handleSuggestAlternative = (dayIndex, activityId, activity) => {
+    if (!tripId) return;
+    setSuggestingId(activityId);
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripId}/suggest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activityName: activity.name, destination, preference }),
+    })
+      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
+      .then(suggested => {
+        setItinerary(prev => ({
+          ...prev,
+          days: prev.days.map((day, i) => {
+            if (i !== dayIndex) return day;
+            return {
+              ...day,
+              activities: recalculateTimes(day.activities.map(a =>
+                a.id !== activityId ? a : {
+                  ...a,
+                  name: suggested.title,
+                  description: suggested.description || "",
+                  duration: suggested.estimatedDuration || a.duration,
+                }
+              )),
+            };
+          }),
+        }));
+        showToast("Activity updated!");
+      })
+      .catch(err => showToast(`Could not suggest alternative: ${err.message}`))
+      .finally(() => setSuggestingId(null));
   };
 
   const handleRemoveActivity = (dayIndex, activityId) => {
@@ -342,6 +376,8 @@ export default function ItineraryPage() {
             dayIndex={dayIndex}
             onMoveActivity={handleMoveActivity}
             onRemoveActivity={handleRemoveActivity}
+            onSuggestAlternative={handleSuggestAlternative}
+            suggestingId={suggestingId}
           />
         ))}
       </div>
@@ -349,7 +385,7 @@ export default function ItineraryPage() {
   );
 }
 
-function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity }) {
+function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity, onSuggestAlternative, suggestingId }) {
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
 
@@ -373,6 +409,8 @@ function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity }) {
                   showDivider={i < acts.length - 1}
                   isDragging={draggedId === act.id}
                   isDragOver={dragOverId === act.id && draggedId !== act.id}
+                  isSuggesting={suggestingId === act.id}
+                  onSuggest={() => onSuggestAlternative(dayIndex, act.id, act)}
                   onDragStart={e => {
                     e.dataTransfer.setData("text/plain", JSON.stringify({ dayIndex, id: act.id }));
                     e.dataTransfer.effectAllowed = "move";
@@ -403,7 +441,7 @@ function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity }) {
   );
 }
 
-function ActivityRow({ activity, showDivider, isDragging, isDragOver, onDragStart, onDragEnd, onDragOver, onDrop, onRemove }) {
+function ActivityRow({ activity, showDivider, isDragging, isDragOver, isSuggesting, onSuggest, onDragStart, onDragEnd, onDragOver, onDrop, onRemove }) {
   return (
     <div
       draggable
@@ -429,7 +467,12 @@ function ActivityRow({ activity, showDivider, isDragging, isDragOver, onDragStar
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginLeft: 16 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{activity.time}</span>
-              <button style={iconBtn} title="Suggest alternative">↺</button>
+              <button
+                onClick={onSuggest}
+                disabled={isSuggesting}
+                style={{ ...iconBtn, opacity: isSuggesting ? 0.4 : 1 }}
+                title="Suggest alternative"
+              >{isSuggesting ? "…" : "↺"}</button>
               <button onClick={onRemove} style={iconBtn} title="Remove">🗑</button>
             </div>
           </div>
