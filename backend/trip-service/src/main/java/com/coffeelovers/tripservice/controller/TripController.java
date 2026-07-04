@@ -1,7 +1,9 @@
 package com.coffeelovers.tripservice.controller;
 
 import com.coffeelovers.tripservice.dto.CreateTripRequest;
+import com.coffeelovers.tripservice.dto.GenerateTripItineraryRequest;
 import com.coffeelovers.tripservice.dto.TripResponse;
+import com.coffeelovers.tripservice.dto.genai.GenerateItineraryResponse;
 import com.coffeelovers.tripservice.service.TripService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -44,5 +46,13 @@ public class TripController {
             @PathVariable Long userId) {
 
         return tripService.getTripsByUserId(userId);
+    }
+
+    @PostMapping("/{id}/itinerary")
+    public GenerateItineraryResponse generateItinerary(
+            @PathVariable UUID id,
+            @Valid @RequestBody GenerateTripItineraryRequest request) {
+
+        return tripService.generateItinerary(id, request);
     }
 }
