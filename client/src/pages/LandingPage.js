@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const PREFERENCES = [
@@ -57,6 +57,8 @@ const TRIP_TYPE_MAP = {
 
 function LandingPage() {
   const [destination, setDestination] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [preference, setPreference] = useState("popular");
@@ -64,6 +66,34 @@ function LandingPage() {
   const [formError, setFormError] = useState("");
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const suggestionsRef = useRef(null);
+  const today = new Date().toISOString().slice(0, 10);
+
+  useEffect(() => {
+    if (destination.length < 2) { setSuggestions([]); return; }
+    const timer = setTimeout(() => {
+      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=5&addressdetails=1&featuretype=city`, {
+        headers: { "Accept-Language": "en" },
+      })
+        .then(r => r.json())
+        .then(data => {
+          setSuggestions(data.map(r => r.display_name.split(",").slice(0, 2).join(",").trim()));
+          setShowSuggestions(true);
+        })
+        .catch(() => {});
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [destination]);
+
+  useEffect(() => {
+    const handleClick = e => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -175,7 +205,7 @@ function LandingPage() {
 
           {/* Destination + Start Date + End Date */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 24 }}>
-            <div>
+            <div ref={suggestionsRef}>
               <label htmlFor="destination" style={labelStyle}>Destination</label>
               <div style={{ position: "relative" }}>
                 <span style={inputIconStyle}>📍</span>
@@ -184,9 +214,34 @@ function LandingPage() {
                   type="text"
                   placeholder="Where to?"
                   value={destination}
-                  onChange={e => setDestination(e.target.value)}
+                  onChange={e => { setDestination(e.target.value); setShowSuggestions(true); }}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                   style={{ ...inputStyle, paddingLeft: 38 }}
+                  autoComplete="off"
                 />
+                {showSuggestions && suggestions.length > 0 && (
+                  <ul style={{
+                    position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100,
+                    background: "white", border: "1px solid #e5e7eb", borderRadius: 10,
+                    marginTop: 4, padding: 0, listStyle: "none",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                  }}>
+                    {suggestions.map((s, i) => (
+                      <li
+                        key={i}
+                        onMouseDown={() => { setDestination(s); setSuggestions([]); setShowSuggestions(false); }}
+                        style={{
+                          padding: "10px 14px", fontSize: 14, color: "#1f2937", cursor: "pointer",
+                          borderBottom: i < suggestions.length - 1 ? "1px solid #f3f4f6" : "none",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
+                        onMouseLeave={e => e.currentTarget.style.background = "white"}
+                      >
+                        📍 {s}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
             <div>
@@ -195,7 +250,8 @@ function LandingPage() {
                 id="startDate"
                 type="date"
                 value={startDate}
-                onChange={e => setStartDate(e.target.value)}
+                min={today}
+                onChange={e => { setStartDate(e.target.value); if (endDate && e.target.value > endDate) setEndDate(""); }}
                 style={inputStyle}
               />
             </div>
@@ -205,6 +261,7 @@ function LandingPage() {
                 id="endDate"
                 type="date"
                 value={endDate}
+                min={startDate || today}
                 onChange={e => setEndDate(e.target.value)}
                 style={inputStyle}
               />
