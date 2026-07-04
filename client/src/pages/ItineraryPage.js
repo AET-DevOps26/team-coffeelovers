@@ -77,6 +77,7 @@ export default function ItineraryPage() {
   const startDate   = searchParams.get("start")       || location.state?.startDate;
   const endDate     = searchParams.get("end")         || location.state?.endDate;
   const preference  = searchParams.get("preference")  || location.state?.preference || "popular";
+  const tripId      = searchParams.get("tripId")      || location.state?.tripId;
   const preferenceLabel = PREFERENCE_LABELS[preference] || preference;
 
   const [itinerary, setItinerary] = useState(null);
@@ -89,23 +90,23 @@ export default function ItineraryPage() {
   const [shareEmail, setShareEmail] = useState("");
 
   useEffect(() => {
-    const days = (startDate && endDate)
-      ? Math.max(1, Math.round((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1)
-      : 3;
-    fetch(`${process.env.REACT_APP_GENAI_API_URL}/api/v1/genai/generate`, {
+    if (!tripId) {
+      setGenaiError("No trip ID provided.");
+      setGenaiLoading(false);
+      return;
+    }
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripId}/itinerary`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        destination,
-        days,
         preferences: [preference],
-        budget: { amount: 0, currency: "EUR" },
+        currency: "EUR",
       }),
     })
-      .then(r => { if (!r.ok) throw new Error(`GenAI error ${r.status}`); return r.json(); })
+      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
       .then(data => { setItinerary(mapGenaiResponse(data)); setGenaiLoading(false); })
       .catch(err => { setGenaiError(err.message); setGenaiLoading(false); });
-  }, [destination, startDate, endDate, preference]);
+  }, [tripId, preference]);
 
   const showToast = (msg) => {
     setToast(msg);

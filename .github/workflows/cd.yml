@@ -61,7 +61,6 @@ jobs:
           build-args: |
             REACT_APP_API_URL=${{ env.PUBLIC_URL }}
             REACT_APP_TRIP_API_URL=${{ env.PUBLIC_URL }}
-            REACT_APP_GENAI_API_URL=${{ env.PUBLIC_URL }}
 
       - name: Build and push auth-service image
         uses: docker/build-push-action@v5
