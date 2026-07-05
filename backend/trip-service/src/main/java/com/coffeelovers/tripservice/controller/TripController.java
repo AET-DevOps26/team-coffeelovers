@@ -1,7 +1,9 @@
 package com.coffeelovers.tripservice.controller;
 
 import com.coffeelovers.tripservice.dto.CreateTripRequest;
+import com.coffeelovers.tripservice.dto.GenerateTripItineraryRequest;
 import com.coffeelovers.tripservice.dto.TripResponse;
+import com.coffeelovers.tripservice.dto.genai.GenerateItineraryResponse;
 import com.coffeelovers.tripservice.service.TripService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -41,8 +43,22 @@ public class TripController {
 
     @GetMapping("/user/{userId}")
     public List<TripResponse> getTripsByUserId(
-            @PathVariable UUID userId) {
+            @PathVariable Long userId) {
 
         return tripService.getTripsByUserId(userId);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTrip(@PathVariable UUID id) {
+        tripService.deleteTrip(id);
+    }
+
+    @PostMapping("/{id}/itinerary")
+    public GenerateItineraryResponse generateItinerary(
+            @PathVariable UUID id,
+            @Valid @RequestBody GenerateTripItineraryRequest request) {
+
+        return tripService.generateItinerary(id, request);
     }
 }

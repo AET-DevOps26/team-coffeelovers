@@ -5,6 +5,8 @@ This provider does not call any external LLM. It is used for local development,
 CI tests, and backend integration before OpenAI or Logos are enabled.
 """
 
+from src.providers.base import LLMProvider
+
 from src.schemas import (
     Activity,
     Budget,
@@ -16,7 +18,7 @@ from src.schemas import (
 )
 
 
-class MockProvider:
+class MockProvider(LLMProvider):
     """Generates deterministic mock itineraries and suggestions."""
 
     def generate_itinerary(

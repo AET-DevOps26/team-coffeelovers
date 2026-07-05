@@ -5,72 +5,29 @@ import "leaflet/dist/leaflet.css";
 import Navbar from "../components/NavBar";
 
 // ---------------------------------------------------------------------------
-// Mock itinerary — same shape the AI service will eventually return
-// ---------------------------------------------------------------------------
-const MOCK_ITINERARY = {
-  days: [
-    {
-      day: 1,
-      title: "Gothic Quarter & La Rambla",
-      activities: [
-        {
-          id: 1,
-          name: "La Sagrada Família",
-          description: "Start your adventure at Gaudí's masterpiece. Book tickets in advance to avoid long queues.",
-          time: "9:00 AM",
-          duration: "2-3 hours",
-          period: "MORNING",
-        },
-        {
-          id: 2,
-          name: "Casa Batlló",
-          description: "Another Gaudí marvel on Passeig de Gràcia, featuring stunning architecture and rooftop views.",
-          time: "11:30 AM",
-          duration: "1.5 hours",
-          period: "MORNING",
-        },
-        {
-          id: 3,
-          name: "Gothic Quarter Walking Tour",
-          description: "Explore the narrow medieval streets, visit the Barcelona Cathedral, and discover hidden squares.",
-          time: "2:00 PM",
-          duration: "2 hours",
-          period: "AFTERNOON",
-        },
-        {
-          id: 4,
-          name: "La Boqueria Market",
-          description: "Famous market on La Rambla with fresh produce, tapas, and local specialties.",
-          time: "4:30 PM",
-          duration: "1 hour",
-          period: "AFTERNOON",
-        },
-      ],
-    },
-    {
-      day: 2,
-      title: "Barceloneta & Park Güell",
-      activities: [
-        {
-          id: 5,
-          name: "Park Güell",
-          description: "Explore Gaudí's colorful mosaic park with panoramic views over the city.",
-          time: "9:00 AM",
-          duration: "2 hours",
-          period: "MORNING",
-        },
-        {
-          id: 6,
-          name: "Barceloneta Beach",
-          description: "Relax on Barcelona's most famous beach and enjoy fresh seafood at a beachfront restaurant.",
-          time: "12:00 PM",
-          duration: "2 hours",
-          period: "AFTERNOON",
-        },
-      ],
-    },
-  ],
-};
+function assignPeriod(index, total) {
+  const third = Math.ceil(total / 3);
+  if (index < third) return "MORNING";
+  if (index < third * 2) return "AFTERNOON";
+  return "EVENING";
+}
+
+function mapGenaiResponse(data) {
+  return {
+    days: data.itinerary.map(day => ({
+      day: day.day,
+      title: day.title,
+      activities: day.activities.map((act, i) => ({
+        id: `${day.day}-${i}`,
+        name: act.title,
+        description: act.description || "",
+        duration: act.estimatedDuration || "1 hour",
+        period: assignPeriod(i, day.activities.length),
+        time: "",
+      })),
+    })),
+  };
+}
 
 // ---------------------------------------------------------------------------
 const PERIOD_START_MINUTES = { MORNING: 9 * 60, AFTERNOON: 13 * 60, EVENING: 18 * 60 };
@@ -120,18 +77,77 @@ export default function ItineraryPage() {
   const startDate   = searchParams.get("start")       || location.state?.startDate;
   const endDate     = searchParams.get("end")         || location.state?.endDate;
   const preference  = searchParams.get("preference")  || location.state?.preference || "popular";
+  const tripId      = searchParams.get("tripId")      || location.state?.tripId;
   const preferenceLabel = PREFERENCE_LABELS[preference] || preference;
 
-  const [itinerary, setItinerary] = useState(MOCK_ITINERARY);
+  const [itinerary, setItinerary] = useState(null);
+  const [genaiLoading, setGenaiLoading] = useState(true);
+  const [genaiError, setGenaiError] = useState(null);
+  const [suggestingId, setSuggestingId] = useState(null);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [mapZoom] = useState(13);
   const [toast, setToast] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
 
+  useEffect(() => {
+    if (!tripId) {
+      setGenaiError("No trip ID provided.");
+      setGenaiLoading(false);
+      return;
+    }
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripId}/itinerary`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        preferences: [preference],
+        currency: "EUR",
+      }),
+    })
+      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
+      .then(data => { setItinerary(mapGenaiResponse(data)); setGenaiLoading(false); })
+      .catch(err => { setGenaiError(err.message); setGenaiLoading(false); });
+  }, [tripId, preference]);
+
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  };
+
+  const handleSuggestAlternative = (dayIndex, activityId, activity) => {
+    if (!tripId) return;
+    setSuggestingId(activityId);
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripId}/suggest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activityName: activity.name, destination, preference }),
+    })
+      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
+      .then(suggested => {
+        setItinerary(prev => ({
+          ...prev,
+          days: prev.days.map((day, i) => {
+            if (i !== dayIndex) return day;
+            return {
+              ...day,
+              activities: recalculateTimes(day.activities.map(a =>
+                a.id !== activityId ? a : {
+                  ...a,
+                  name: suggested.title,
+                  description: suggested.description || "",
+                  duration: suggested.estimatedDuration || a.duration,
+                }
+              )),
+            };
+          }),
+        }));
+        showToast("Activity updated!");
+      })
+      .catch(err => showToast(`Could not suggest alternative: ${err.message}`))
+      .finally(() => setSuggestingId(null));
   };
 
   const handleRemoveActivity = (dayIndex, activityId) => {
@@ -180,16 +196,11 @@ export default function ItineraryPage() {
   const handleSave = () => {
     const token = localStorage.getItem("token");
     if (!token) { navigate("/login"); return; }
-    const saved = JSON.parse(localStorage.getItem("savedPlans") || "[]");
-    const plan = { id: Date.now(), destination, startDate, endDate, preference, createdAt: new Date().toISOString().slice(0,10), itinerary };
-    const already = saved.findIndex(p => p.destination === destination && p.startDate === startDate && p.endDate === endDate);
-    if (already === -1) saved.unshift(plan); else saved[already] = plan;
-    localStorage.setItem("savedPlans", JSON.stringify(saved));
-    showToast("Plan saved!");
+    showToast("Trip is already saved — check My Plans!");
   };
 
   const buildShareUrl = () => {
-    const p = new URLSearchParams({ destination, start: startDate || "", end: endDate || "", preference });
+    const p = new URLSearchParams({ destination, start: startDate || "", end: endDate || "", preference, ...(tripId && { tripId }) });
     return `${window.location.origin}/itinerary?${p.toString()}`;
   };
 
@@ -345,13 +356,25 @@ export default function ItineraryPage() {
         </div>
 
         {/* ── Days ── */}
-        {itinerary.days.map((day, dayIndex) => (
+        {genaiLoading && (
+          <div style={{ textAlign: "center", padding: "48px 0", color: "#6b7280", fontSize: 15 }}>
+            Generating your itinerary with AI…
+          </div>
+        )}
+        {genaiError && (
+          <div style={{ textAlign: "center", padding: "48px 0", color: "#dc2626", fontSize: 15 }}>
+            Could not generate itinerary: {genaiError}
+          </div>
+        )}
+        {itinerary && itinerary.days.map((day, dayIndex) => (
           <DayCard
             key={day.day}
             day={day}
             dayIndex={dayIndex}
             onMoveActivity={handleMoveActivity}
             onRemoveActivity={handleRemoveActivity}
+            onSuggestAlternative={handleSuggestAlternative}
+            suggestingId={suggestingId}
           />
         ))}
       </div>
@@ -359,7 +382,7 @@ export default function ItineraryPage() {
   );
 }
 
-function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity }) {
+function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity, onSuggestAlternative, suggestingId }) {
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
 
@@ -383,6 +406,8 @@ function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity }) {
                   showDivider={i < acts.length - 1}
                   isDragging={draggedId === act.id}
                   isDragOver={dragOverId === act.id && draggedId !== act.id}
+                  isSuggesting={suggestingId === act.id}
+                  onSuggest={() => onSuggestAlternative(dayIndex, act.id, act)}
                   onDragStart={e => {
                     e.dataTransfer.setData("text/plain", JSON.stringify({ dayIndex, id: act.id }));
                     e.dataTransfer.effectAllowed = "move";
@@ -413,7 +438,7 @@ function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity }) {
   );
 }
 
-function ActivityRow({ activity, showDivider, isDragging, isDragOver, onDragStart, onDragEnd, onDragOver, onDrop, onRemove }) {
+function ActivityRow({ activity, showDivider, isDragging, isDragOver, isSuggesting, onSuggest, onDragStart, onDragEnd, onDragOver, onDrop, onRemove }) {
   return (
     <div
       draggable
@@ -439,7 +464,12 @@ function ActivityRow({ activity, showDivider, isDragging, isDragOver, onDragStar
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginLeft: 16 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{activity.time}</span>
-              <button style={iconBtn} title="Suggest alternative">↺</button>
+              <button
+                onClick={onSuggest}
+                disabled={isSuggesting}
+                style={{ ...iconBtn, opacity: isSuggesting ? 0.4 : 1 }}
+                title="Suggest alternative"
+              >{isSuggesting ? "…" : "↺"}</button>
               <button onClick={onRemove} style={iconBtn} title="Remove">🗑</button>
             </div>
           </div>
