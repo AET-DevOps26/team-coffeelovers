@@ -346,31 +346,8 @@ function LandingPage() {
                 setFormError("Please fill in destination and dates.");
                 return;
               }
-              const userId = localStorage.getItem("userId");
-              if (!userId) { navigate("/login"); return; }
-              setSubmitting(true);
-              try {
-                const res = await fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
-                  body: JSON.stringify({
-                    userId,
-                    destination,
-                    startDate,
-                    endDate,
-                    tripType: TRIP_TYPE_MAP[preference] || "MIXED",
-                    budget: 0,
-                  }),
-                });
-                if (!res.ok) throw new Error("Could not create trip.");
-                const trip = await res.json();
-                const p = new URLSearchParams({ destination, start: startDate, end: endDate, preference, tripId: trip.id });
-                navigate(`/itinerary?${p.toString()}`);
-              } catch (err) {
-                setFormError(err.message);
-              } finally {
-                setSubmitting(false);
-              }
+              const p = new URLSearchParams({ destination, start: startDate, end: endDate, preference });
+              navigate(`/itinerary?${p.toString()}`);
             }}
             style={{
               width: "100%",
