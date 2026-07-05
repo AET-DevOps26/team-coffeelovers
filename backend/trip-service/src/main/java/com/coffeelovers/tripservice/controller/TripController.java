@@ -48,6 +48,12 @@ public class TripController {
         return tripService.getTripsByUserId(userId);
     }
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTrip(@PathVariable UUID id) {
+        tripService.deleteTrip(id);
+    }
+
     @PostMapping("/{id}/itinerary")
     public GenerateItineraryResponse generateItinerary(
             @PathVariable UUID id,
