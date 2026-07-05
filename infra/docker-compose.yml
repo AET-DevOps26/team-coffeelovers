@@ -78,9 +78,14 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - LLM_MODEL=${LLM_MODEL:-gpt-3.5-turbo}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      GENAI_PROVIDER: ${GENAI_PROVIDER:-mock}
+      GENAI_LOG_LEVEL: ${GENAI_LOG_LEVEL:-INFO}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      LOGOS_API_KEY: ${LOGOS_API_KEY:-}
+      LOGOS_BASE_URL: ${LOGOS_BASE_URL:-https://logos.aet.cit.tum.de/v1}
+      LOGOS_MODEL: ${LOGOS_MODEL:-openai/gpt-oss-120b}
     restart: unless-stopped
 
   gateway:

@@ -5,3 +5,4 @@ uvicorn
 pytest
 # fastapi testing
 httpx
+langchain-openai
