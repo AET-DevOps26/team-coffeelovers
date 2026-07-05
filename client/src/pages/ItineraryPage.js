@@ -14,18 +14,17 @@ function assignPeriod(index, total) {
 
 function mapGenaiResponse(data) {
   return {
-    days: data.itinerary.map(day => ({
-      day: day.day,
-      title: day.title,
-      activities: day.activities.map((act, i) => ({
+    days: data.itinerary.map(day => {
+      const activities = day.activities.map((act, i) => ({
         id: `${day.day}-${i}`,
         name: act.title,
         description: act.description || "",
         duration: act.estimatedDuration || "1 hour",
         period: assignPeriod(i, day.activities.length),
         time: "",
-      })),
-    })),
+      }));
+      return { day: day.day, title: day.title, activities: recalculateTimes(activities) };
+    }),
   };
 }
 
@@ -73,13 +72,19 @@ export default function ItineraryPage() {
     mixed: "Mixed Trip",
   };
 
+  const TRIP_TYPE_MAP = {
+    popular: "TOURISTIC", historical: "HISTORIC",
+    outdoor: "TOURISTIC", food: "GASTRONOMIC", mixed: "MIXED",
+  };
+
   const destination = searchParams.get("destination") || location.state?.destination || "Barcelona";
   const startDate   = searchParams.get("start")       || location.state?.startDate;
   const endDate     = searchParams.get("end")         || location.state?.endDate;
   const preference  = searchParams.get("preference")  || location.state?.preference || "popular";
-  const tripId      = searchParams.get("tripId")      || location.state?.tripId;
+  const tripIdParam = searchParams.get("tripId")      || location.state?.tripId;
   const preferenceLabel = PREFERENCE_LABELS[preference] || preference;
 
+  const [activeTripId, setActiveTripId] = useState(tripIdParam || null);
   const [itinerary, setItinerary] = useState(null);
   const [genaiLoading, setGenaiLoading] = useState(true);
   const [genaiError, setGenaiError] = useState(null);
@@ -90,27 +95,47 @@ export default function ItineraryPage() {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
 
+  // Warn before leaving if itinerary is not saved
   useEffect(() => {
-    if (!tripId) {
-      setGenaiError("No trip ID provided.");
-      setGenaiLoading(false);
+    if (activeTripId) return;
+    const handler = e => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [activeTripId]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const days = (() => {
+      if (!startDate || !endDate) return 3;
+      const startMs = Date.parse(startDate);
+      const endMs = Date.parse(endDate);
+      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return 3;
+      return Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1);
+    })();
+
+    if (tripIdParam) {
+      // Viewing a saved plan — fetch itinerary via trip-service
+      fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripIdParam}/itinerary`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ preferences: [preference], currency: "EUR" }),
+      })
+        .then(r => { if (!r.ok) { throw new Error(`Error ${r.status}`); } return r.json(); })
+        .then(data => { setItinerary(mapGenaiResponse(data)); setGenaiLoading(false); })
+        .catch(err => { setGenaiError(err.message); setGenaiLoading(false); });
       return;
     }
-    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripId}/itinerary`, {
+
+    // New plan (logged in or anonymous) — preview via trip-service, not saved yet
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/generate`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({
-        preferences: [preference],
-        currency: "EUR",
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ destination, days, preferences: [preference], currency: "EUR" }),
     })
-      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
+      .then(r => { if (!r.ok) { throw new Error(`Error ${r.status}`); } return r.json(); })
       .then(data => { setItinerary(mapGenaiResponse(data)); setGenaiLoading(false); })
       .catch(err => { setGenaiError(err.message); setGenaiLoading(false); });
-  }, [tripId, preference]);
+  }, [tripIdParam, preference, destination, startDate, endDate]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -118,14 +143,14 @@ export default function ItineraryPage() {
   };
 
   const handleSuggestAlternative = (dayIndex, activityId, activity) => {
-    if (!tripId) return;
+    if (!activeTripId) return;
     setSuggestingId(activityId);
-    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripId}/suggest`, {
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${activeTripId}/suggest`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ activityName: activity.name, destination, preference }),
     })
-      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
+      .then(r => { if (!r.ok) { throw new Error(`Error ${r.status}`); } return r.json(); })
       .then(suggested => {
         setItinerary(prev => ({
           ...prev,
@@ -195,12 +220,43 @@ export default function ItineraryPage() {
 
   const handleSave = () => {
     const token = localStorage.getItem("token");
-    if (!token) { navigate("/login"); return; }
-    showToast("Trip is already saved — check My Plans!");
+    const parsedUserId = Number(localStorage.getItem("userId"));
+    if (!token || !Number.isFinite(parsedUserId) || parsedUserId <= 0) {
+      sessionStorage.setItem("redirectAfterLogin", window.location.pathname + window.location.search);
+      navigate("/login");
+      return;
+    }
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        userId: parsedUserId,
+        destination,
+        startDate: startDate || new Date().toISOString().slice(0, 10),
+        endDate: endDate || new Date().toISOString().slice(0, 10),
+        tripType: TRIP_TYPE_MAP[preference] || "MIXED",
+        budget: 0,
+      }),
+    })
+      .then(r => { if (!r.ok) { throw new Error("Could not save trip."); } return r.json(); })
+      .then(trip => { setActiveTripId(trip.id); showToast("Trip saved!"); })
+      .catch(err => showToast(`Could not save: ${err.message}`));
+  };
+
+  const handleDelete = () => {
+    if (!activeTripId) return;
+    if (!window.confirm("Delete this trip? This cannot be undone.")) return;
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${activeTripId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); })
+      .then(() => navigate("/plans"))
+      .catch(err => showToast(`Could not delete: ${err.message}`));
   };
 
   const buildShareUrl = () => {
-    const p = new URLSearchParams({ destination, start: startDate || "", end: endDate || "", preference, ...(tripId && { tripId }) });
+    const p = new URLSearchParams({ destination, start: startDate || "", end: endDate || "", preference, ...(activeTripId && { tripId: activeTripId }) });
     return `${window.location.origin}/itinerary?${p.toString()}`;
   };
 
@@ -273,7 +329,10 @@ export default function ItineraryPage() {
         </div>
 
         <div style={{ position: "absolute", top: 24, right: 24, display: "flex", gap: 10 }}>
-          <button onClick={handleSave} style={headerBtnStyle}>Save Plan</button>
+          {activeTripId
+            ? <button onClick={handleDelete} style={{ ...headerBtnStyle, background: "#dc2626" }}>Delete Plan</button>
+            : <button onClick={handleSave} style={headerBtnStyle}>Save Plan</button>
+          }
           <button onClick={() => setShareOpen(true)} style={{ ...headerBtnStyle, background: "white", color: "#1e293b" }}>Share Plan</button>
         </div>
       </div>
