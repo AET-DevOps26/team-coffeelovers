@@ -98,7 +98,10 @@ export default function ItineraryPage() {
     }
     fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripId}/itinerary`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
       body: JSON.stringify({
         preferences: [preference],
         currency: "EUR",
@@ -193,17 +196,11 @@ export default function ItineraryPage() {
   const handleSave = () => {
     const token = localStorage.getItem("token");
     if (!token) { navigate("/login"); return; }
-    if (!itinerary) { showToast("Itinerary still loading…"); return; }
-    const saved = JSON.parse(localStorage.getItem("savedPlans") || "[]");
-    const plan = { id: Date.now(), destination, startDate, endDate, preference, createdAt: new Date().toISOString().slice(0,10), itinerary };
-    const already = saved.findIndex(p => p.destination === destination && p.startDate === startDate && p.endDate === endDate);
-    if (already === -1) saved.unshift(plan); else saved[already] = plan;
-    localStorage.setItem("savedPlans", JSON.stringify(saved));
-    showToast("Plan saved!");
+    showToast("Trip is already saved — check My Plans!");
   };
 
   const buildShareUrl = () => {
-    const p = new URLSearchParams({ destination, start: startDate || "", end: endDate || "", preference });
+    const p = new URLSearchParams({ destination, start: startDate || "", end: endDate || "", preference, ...(tripId && { tripId }) });
     return `${window.location.origin}/itinerary?${p.toString()}`;
   };
 

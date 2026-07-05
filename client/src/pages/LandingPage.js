@@ -72,12 +72,20 @@ function LandingPage() {
   useEffect(() => {
     if (destination.length < 2) { setSuggestions([]); return; }
     const timer = setTimeout(() => {
-      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=5&addressdetails=1&featuretype=city`, {
+      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=10&addressdetails=1`, {
         headers: { "Accept-Language": "en" },
       })
         .then(r => r.json())
         .then(data => {
-          setSuggestions(data.map(r => r.display_name.split(",").slice(0, 2).join(",").trim()));
+          const cities = data
+            .filter(r => r.class === "place" && ["city", "town", "village", "municipality"].includes(r.type))
+            .slice(0, 5)
+            .map(r => {
+              const city = r.address.city || r.address.town || r.address.village || r.address.municipality || r.name;
+              const country = r.address.country;
+              return country ? `${city}, ${country}` : city;
+            });
+          setSuggestions(cities);
           setShowSuggestions(true);
         })
         .catch(() => {});
