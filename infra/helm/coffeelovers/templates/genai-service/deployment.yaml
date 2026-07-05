@@ -26,6 +26,9 @@ spec:
           ports:
             - containerPort: {{ $svc.port }}
           env:
+            {{- if $svc.env }}
+            {{- toYaml $svc.env | nindent 12 }}
+            {{- end }}
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
