@@ -2,6 +2,7 @@ package com.coffeelovers.tripservice.service;
 
 import com.coffeelovers.tripservice.client.GenAiClient;
 import com.coffeelovers.tripservice.dto.CreateTripRequest;
+import com.coffeelovers.tripservice.dto.GenerateItineraryPreviewRequest;
 import com.coffeelovers.tripservice.dto.GenerateTripItineraryRequest;
 import com.coffeelovers.tripservice.dto.TripResponse;
 import com.coffeelovers.tripservice.dto.genai.BudgetDto;
@@ -72,6 +73,16 @@ public class TripService {
                 new BudgetDto(trip.getBudget(), request.currency())
         );
 
+        return genAiClient.generateItinerary(genAiRequest);
+    }
+
+    public GenerateItineraryResponse generatePreview(GenerateItineraryPreviewRequest request) {
+        GenerateItineraryRequest genAiRequest = new GenerateItineraryRequest(
+                request.destination(),
+                request.days(),
+                request.preferences(),
+                new BudgetDto(java.math.BigDecimal.ZERO, request.currency())
+        );
         return genAiClient.generateItinerary(genAiRequest);
     }
 
