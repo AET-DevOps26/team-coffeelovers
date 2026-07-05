@@ -77,8 +77,12 @@ function LandingPage() {
       })
         .then(r => r.json())
         .then(data => {
+          const cityTypes = ["city", "town", "village", "municipality"];
           const cities = data
-            .filter(r => r.class === "place" && ["city", "town", "village", "municipality"].includes(r.type))
+            .filter(r =>
+              (r.class === "place" && cityTypes.includes(r.type)) ||
+              (r.class === "boundary" && r.type === "administrative" && cityTypes.includes(r.addresstype))
+            )
             .slice(0, 5)
             .map(r => {
               const city = r.address.city || r.address.town || r.address.village || r.address.municipality || r.name;

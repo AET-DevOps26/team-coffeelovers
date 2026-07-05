@@ -35,7 +35,21 @@ export default function PlansPage() {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const navigate = useNavigate();
+
+  const handleDelete = (planId) => {
+    if (!window.confirm("Delete this trip? This cannot be undone.")) return;
+    setDeletingId(planId);
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${planId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); })
+      .then(() => setPlans(prev => prev.filter(p => p.id !== planId)))
+      .catch(err => alert(`Could not delete trip: ${err.message}`))
+      .finally(() => setDeletingId(null));
+  };
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -116,18 +130,35 @@ export default function PlansPage() {
                   {created && (
                     <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 14px" }}>Created {created}</p>
                   )}
-                  <button
-                    onClick={() => {
-                      const p = new URLSearchParams({ destination: plan.destination, start: plan.startDate, end: plan.endDate, preference: plan.preference, tripId: plan.id });
-                      navigate(`/itinerary?${p.toString()}`);
-                    }}
-                    style={{
-                      width: "100%", padding: "11px",
-                      background: "#1e293b", color: "white",
-                      border: "none", borderRadius: 10,
-                      fontSize: 14, fontWeight: 700, cursor: "pointer",
-                    }}
-                  >View Itinerary</button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => {
+                        const p = new URLSearchParams({ destination: plan.destination, start: plan.startDate, end: plan.endDate, preference: plan.preference, tripId: plan.id });
+                        navigate(`/itinerary?${p.toString()}`);
+                      }}
+                      style={{
+                        flex: 1, padding: "11px",
+                        background: "#1e293b", color: "white",
+                        border: "none", borderRadius: 10,
+                        fontSize: 14, fontWeight: 700, cursor: "pointer",
+                      }}
+                    >View Itinerary</button>
+                    <button
+                      onClick={() => handleDelete(plan.id)}
+                      disabled={deletingId === plan.id}
+                      title="Delete trip"
+                      style={{
+                        padding: "11px 13px",
+                        background: deletingId === plan.id ? "#f3f4f6" : "#fff0f0",
+                        color: "#dc2626",
+                        border: "1.5px solid #fecaca",
+                        borderRadius: 10,
+                        fontSize: 16,
+                        cursor: deletingId === plan.id ? "not-allowed" : "pointer",
+                        opacity: deletingId === plan.id ? 0.5 : 1,
+                      }}
+                    >{deletingId === plan.id ? "…" : "🗑"}</button>
+                  </div>
                 </div>
               </div>
             );

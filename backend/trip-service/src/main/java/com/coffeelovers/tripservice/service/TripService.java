@@ -75,6 +75,13 @@ public class TripService {
         return genAiClient.generateItinerary(genAiRequest);
     }
 
+    public void deleteTrip(UUID id) {
+        if (!tripRepository.existsById(id)) {
+            throw new TripNotFoundException(id);
+        }
+        tripRepository.deleteById(id);
+    }
+
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("End date must not be before start date");
