@@ -122,11 +122,11 @@ export default function ItineraryPage() {
       return;
     }
 
-    // New plan (logged in or anonymous) — call genai directly, not saved yet
-    fetch(`${process.env.REACT_APP_GENAI_API_URL}/api/v1/genai/generate`, {
+    // New plan (logged in or anonymous) — preview via trip-service, not saved yet
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ destination, days, preferences: [preference], budget: { amount: 0, currency: "EUR" } }),
+      body: JSON.stringify({ destination, days, preferences: [preference], currency: "EUR" }),
     })
       .then(r => { if (!r.ok) { throw new Error(`Error ${r.status}`); } return r.json(); })
       .then(data => { setItinerary(mapGenaiResponse(data)); setGenaiLoading(false); })

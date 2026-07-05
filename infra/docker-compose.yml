@@ -65,7 +65,6 @@ services:
       args:
         REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8081}
         REACT_APP_TRIP_API_URL: ${REACT_APP_TRIP_API_URL:-http://localhost:8082}
-        REACT_APP_GENAI_API_URL: ${REACT_APP_GENAI_API_URL:-http://localhost:8001}
     ports:
       - "3000:3000"
     depends_on:
