@@ -1,6 +1,7 @@
 package com.coffeelovers.tripservice.controller;
 
 import com.coffeelovers.tripservice.dto.CreateTripRequest;
+import com.coffeelovers.tripservice.dto.GenerateItineraryPreviewRequest;
 import com.coffeelovers.tripservice.dto.GenerateTripItineraryRequest;
 import com.coffeelovers.tripservice.dto.TripResponse;
 import com.coffeelovers.tripservice.dto.genai.GenerateItineraryResponse;
@@ -52,6 +53,13 @@ public class TripController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTrip(@PathVariable UUID id) {
         tripService.deleteTrip(id);
+    }
+
+    @PostMapping("/generate")
+    public GenerateItineraryResponse generatePreview(
+            @Valid @RequestBody GenerateItineraryPreviewRequest request) {
+
+        return tripService.generatePreview(request);
     }
 
     @PostMapping("/{id}/itinerary")

@@ -24,7 +24,9 @@ function LoginPage() {
       localStorage.setItem("token", data.token);
       const payload = JSON.parse(atob(data.token.split(".")[1]));
       localStorage.setItem("userId", payload.userId);
-      navigate("/");
+      const redirect = sessionStorage.getItem("redirectAfterLogin");
+      if (redirect) { sessionStorage.removeItem("redirectAfterLogin"); navigate(redirect); }
+      else navigate("/");
     } catch (err) {
       setError(err.message);
     } finally {
