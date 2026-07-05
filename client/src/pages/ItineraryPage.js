@@ -105,9 +105,13 @@ export default function ItineraryPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const days = startDate && endDate
-      ? Math.max(1, Math.round((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1)
-      : 3;
+    const days = (() => {
+      if (!startDate || !endDate) return 3;
+      const startMs = Date.parse(startDate);
+      const endMs = Date.parse(endDate);
+      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return 3;
+      return Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1);
+    })();
 
     if (tripIdParam) {
       // Viewing a saved plan — fetch itinerary via trip-service
@@ -215,9 +219,9 @@ export default function ItineraryPage() {
   };
 
   const handleSave = () => {
-    const userId = localStorage.getItem("userId");
     const token = localStorage.getItem("token");
-    if (!userId || !token) {
+    const parsedUserId = Number(localStorage.getItem("userId"));
+    if (!token || !Number.isFinite(parsedUserId) || parsedUserId <= 0) {
       sessionStorage.setItem("redirectAfterLogin", window.location.pathname + window.location.search);
       navigate("/login");
       return;
@@ -226,7 +230,7 @@ export default function ItineraryPage() {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        userId: Number(userId),
+        userId: parsedUserId,
         destination,
         startDate: startDate || new Date().toISOString().slice(0, 10),
         endDate: endDate || new Date().toISOString().slice(0, 10),
