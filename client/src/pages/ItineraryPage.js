@@ -105,7 +105,6 @@ export default function ItineraryPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
     const days = startDate && endDate
       ? Math.max(1, Math.round((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1)
       : 3;

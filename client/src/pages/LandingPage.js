@@ -47,14 +47,6 @@ const FEATURES = [
   },
 ];
 
-const TRIP_TYPE_MAP = {
-  popular:    "TOURISTIC",
-  historical: "HISTORIC",
-  outdoor:    "TOURISTIC",
-  food:       "GASTRONOMIC",
-  mixed:      "MIXED",
-};
-
 function LandingPage() {
   const [destination, setDestination] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -62,7 +54,6 @@ function LandingPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [preference, setPreference] = useState("popular");
-  const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -339,8 +330,7 @@ function LandingPage() {
             <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12, textAlign: "center" }}>{formError}</p>
           )}
           <button
-            disabled={submitting}
-            onClick={async () => {
+            onClick={() => {
               setFormError("");
               if (!destination || !startDate || !endDate) {
                 setFormError("Please fill in destination and dates.");
@@ -358,12 +348,11 @@ function LandingPage() {
               borderRadius: 12,
               fontSize: 16,
               fontWeight: 700,
-              cursor: submitting ? "not-allowed" : "pointer",
+              cursor: "pointer",
               letterSpacing: "0.02em",
-              opacity: submitting ? 0.7 : 1,
             }}
           >
-            {submitting ? "Creating trip…" : "🔍  Plan My Trip"}
+            🔍  Plan My Trip
           </button>
         </div>
       </section>
