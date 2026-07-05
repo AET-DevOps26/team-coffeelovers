@@ -14,18 +14,17 @@ function assignPeriod(index, total) {
 
 function mapGenaiResponse(data) {
   return {
-    days: data.itinerary.map(day => ({
-      day: day.day,
-      title: day.title,
-      activities: day.activities.map((act, i) => ({
+    days: data.itinerary.map(day => {
+      const activities = day.activities.map((act, i) => ({
         id: `${day.day}-${i}`,
         name: act.title,
         description: act.description || "",
         duration: act.estimatedDuration || "1 hour",
         period: assignPeriod(i, day.activities.length),
         time: "",
-      })),
-    })),
+      }));
+      return { day: day.day, title: day.title, activities: recalculateTimes(activities) };
+    }),
   };
 }
 
