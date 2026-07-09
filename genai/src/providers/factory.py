@@ -7,6 +7,7 @@ The factory selects the active provider from runtime configuration.
 from src.config import GenAIProvider, GenAISettings, get_settings
 from src.providers.mock_provider import MockProvider
 from src.providers.openai_provider import OpenAIProvider
+from src.providers.logos_provider import LogosProvider
 
 
 def create_provider(settings: GenAISettings | None = None):
@@ -25,9 +26,11 @@ def create_provider(settings: GenAISettings | None = None):
         )
 
     if active_settings.provider == GenAIProvider.LOGOS:
-        raise NotImplementedError(
-            "GENAI_PROVIDER=logos is configured, but the Logos provider is "
-            "not implemented yet. Use GENAI_PROVIDER=mock or openai."
+        return LogosProvider(
+            api_key=active_settings.logos_api_key,
+            model=active_settings.logos_model,
+            base_url=active_settings.logos_base_url,
         )
+
 
     raise ValueError(f"Unsupported GenAI provider: {active_settings.provider}")
