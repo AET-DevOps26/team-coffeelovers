@@ -127,7 +127,7 @@ jobs:
             --namespace "${{ env.K8S_NAMESPACE }}" \
             --create-namespace \
             --set-string secrets.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
-            --set-string secrets.openaiApiKey="${{ secrets.OPENAI_API_KEY }}" \
+            --set-string secrets.logosApiKey="${{ secrets.LOGOS_API_KEY }}" \
             --set-string secrets.jwtSecret="${{ secrets.JWT_SECRET }}" \
             --set global.image.tag=${{ github.sha }} \
             --wait --timeout 5m
