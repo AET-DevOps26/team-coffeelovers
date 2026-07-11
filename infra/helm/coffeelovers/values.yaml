@@ -4,11 +4,11 @@ global:
     tag: latest
 
 # Secrets must be supplied at deploy time — never commit real values here.
-# Local dev:  helm install --set secrets.postgresPassword=localdev --set secrets.openaiApiKey=sk-... coffeelovers .
+# Local dev:  helm install --set secrets.postgresPassword=localdev --set secrets.logosApiKey=<key> coffeelovers .
 # CI/CD:      passed automatically via GitHub Actions secrets
 secrets:
   postgresPassword: ""
-  openaiApiKey: ""
+  logosApiKey: ""
   jwtSecret: ""
 
 postgres:
@@ -86,11 +86,11 @@ services:
       repository: genai-service
     env:
       - name: GENAI_PROVIDER
-        value: "openai"
-      - name: OPENAI_BASE_URL
-        value: "https://api.openai.com/v1"
-      - name: OPENAI_MODEL
-        value: "gpt-4o-mini"
+        value: "logos"
+      - name: LOGOS_BASE_URL
+        value: "https://logos.aet.cit.tum.de/v1"
+      - name: LOGOS_MODEL
+        value: "openai/gpt-oss-120b"
     resources:
       requests:
         memory: 256Mi
