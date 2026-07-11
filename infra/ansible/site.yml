@@ -82,7 +82,8 @@
           POSTGRES_DB={{ postgres_db }}
           POSTGRES_USER={{ postgres_user }}
           POSTGRES_PASSWORD={{ postgres_password }}
-          OPENAI_API_KEY={{ openai_api_key }}
+          LOGOS_API_KEY={{ logos_api_key }}
+          GENAI_PROVIDER=logos
           JWT_SECRET={{ jwt_secret }}
           PUBLIC_API_URL={{ public_api_url }}
 

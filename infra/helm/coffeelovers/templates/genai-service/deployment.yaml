@@ -29,11 +29,11 @@ spec:
             {{- if $svc.env }}
             {{- toYaml $svc.env | nindent 12 }}
             {{- end }}
-            - name: OPENAI_API_KEY
+            - name: LOGOS_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: genai-credentials
-                  key: openai-api-key
+                  key: logos-api-key
           readinessProbe:
             httpGet:
               path: /genai/health
