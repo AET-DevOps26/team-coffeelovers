@@ -281,7 +281,7 @@ jobs:
       - name: Deploy full stack with Ansible
         working-directory: infra/ansible
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LOGOS_API_KEY: ${{ secrets.LOGOS_API_KEY }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           ANSIBLE_HOST_KEY_CHECKING: false
