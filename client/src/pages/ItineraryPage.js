@@ -93,7 +93,6 @@ export default function ItineraryPage() {
   const [mapZoom] = useState(13);
   const [toast, setToast] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const [shareEmail, setShareEmail] = useState("");
 
   // Warn before leaving if itinerary is not saved
   useEffect(() => {
@@ -260,14 +259,6 @@ export default function ItineraryPage() {
     return `${window.location.origin}/itinerary?${p.toString()}`;
   };
 
-  const handleShareSend = () => {
-    if (!shareEmail) return;
-    navigator.clipboard.writeText(buildShareUrl()).catch(() => {});
-    setShareOpen(false);
-    setShareEmail("");
-    showToast(`Link sent to ${shareEmail}`);
-  };
-
   const handleCopyLink = () => {
     navigator.clipboard.writeText(buildShareUrl()).then(() => {
       setShareOpen(false);
@@ -364,32 +355,12 @@ export default function ItineraryPage() {
               background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#9ca3af",
             }}>✕</button>
             <h3 id="share-modal-title" style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 800, color: "#111827" }}>Share Plan</h3>
-            <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6b7280" }}>Send this itinerary to a friend via email</p>
-            <label htmlFor="share-email" style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>Email address</label>
-            <input
-              id="share-email"
-              type="email"
-              placeholder="email@example.com"
-              value={shareEmail}
-              onChange={e => setShareEmail(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleShareSend()}
-              style={{
-                width: "100%", padding: "11px 14px",
-                border: "1.5px solid #e5e7eb", borderRadius: 10,
-                fontSize: 14, color: "#1f2937", outline: "none",
-                boxSizing: "border-box", marginBottom: 12,
-              }}
-            />
-            <button onClick={handleShareSend} style={{
-              width: "100%", padding: "12px",
-              background: "#1e293b", color: "white", border: "none",
-              borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", marginBottom: 10,
-            }}>Send Link</button>
+            <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6b7280" }}>Copy the link and share it with a friend</p>
             <button onClick={handleCopyLink} style={{
               width: "100%", padding: "12px",
-              background: "none", color: "#6b7280", border: "1.5px solid #e5e7eb",
-              borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
-            }}>Copy link instead</button>
+              background: "#1e293b", color: "white", border: "none",
+              borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer",
+            }}>Copy Link</button>
           </dialog>
         </>
       )}
