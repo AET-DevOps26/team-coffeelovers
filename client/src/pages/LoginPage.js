@@ -23,9 +23,9 @@ function LoginPage() {
       if (!res.ok) {
         let message = "Login failed. Please try again.";
         try { const d = await res.json(); message = d.message || message; } catch {}
-        if (res.status === 401) message = "Incorrect email or password.";
-        else if (res.status === 404) message = "No account found with this email.";
-        else if (res.status === 403) message = "Account access denied.";
+        if (res.status === 401) message = "Invalid username or password.";
+        else if (res.status === 404) message = "Invalid username or password.";
+        else if (res.status === 403) message = "Could not log in. Your account may be disabled or blocked.";
         throw new Error(message);
       }
       const data = await res.json();
