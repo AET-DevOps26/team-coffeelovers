@@ -93,7 +93,10 @@ public class TripService {
         try {
             trip.setItineraryJson(MAPPER.writeValueAsString(response));
             tripRepository.save(trip);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(TripService.class)
+                    .warn("Failed to cache itineraryJson for trip {}: {}", tripId, e.getMessage());
+        }
 
         return response;
     }

@@ -116,8 +116,10 @@ export default function ItineraryPage() {
     })();
 
     if (tripIdParam) {
-      // Fetch trip metadata to check ownership
-      fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripIdParam}`)
+      // Fetch trip metadata to check ownership (only if logged in)
+      if (token) fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripIdParam}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
         .then(r => r.ok ? r.json() : null)
         .then(trip => {
           if (trip) {

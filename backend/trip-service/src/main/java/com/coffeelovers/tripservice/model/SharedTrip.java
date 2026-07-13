@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "shared_trips")
+@Table(name = "shared_trips", uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"saved_by_user_id", "trip_id"}))
 public class SharedTrip {
 
     @Id

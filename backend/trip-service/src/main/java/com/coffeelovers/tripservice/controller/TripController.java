@@ -73,7 +73,7 @@ public class TripController {
     }
 
     @PostMapping("/{tripId}/save-shared")
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     public SharedTripResponse saveSharedTrip(
             @PathVariable UUID tripId,
             @Valid @RequestBody SaveSharedTripRequest request) {
