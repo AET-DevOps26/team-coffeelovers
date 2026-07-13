@@ -3,6 +3,8 @@ package com.coffeelovers.tripservice.controller;
 import com.coffeelovers.tripservice.dto.CreateTripRequest;
 import com.coffeelovers.tripservice.dto.GenerateItineraryPreviewRequest;
 import com.coffeelovers.tripservice.dto.GenerateTripItineraryRequest;
+import com.coffeelovers.tripservice.dto.SaveSharedTripRequest;
+import com.coffeelovers.tripservice.dto.SharedTripResponse;
 import com.coffeelovers.tripservice.dto.TripResponse;
 import com.coffeelovers.tripservice.dto.genai.GenerateItineraryResponse;
 import com.coffeelovers.tripservice.service.TripService;
@@ -68,5 +70,19 @@ public class TripController {
             @Valid @RequestBody GenerateTripItineraryRequest request) {
 
         return tripService.generateItinerary(id, request);
+    }
+
+    @PostMapping("/{tripId}/save-shared")
+    @ResponseStatus(HttpStatus.CREATED)
+    public SharedTripResponse saveSharedTrip(
+            @PathVariable UUID tripId,
+            @Valid @RequestBody SaveSharedTripRequest request) {
+
+        return tripService.saveSharedTrip(tripId, request.userId());
+    }
+
+    @GetMapping("/shared/user/{userId}")
+    public List<SharedTripResponse> getSharedTrips(@PathVariable Long userId) {
+        return tripService.getSharedTrips(userId);
     }
 }

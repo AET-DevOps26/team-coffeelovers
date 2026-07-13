@@ -9,6 +9,7 @@ import java.time.LocalDate;
 
 public record CreateTripRequest(
         @NotNull Long userId,
+        String authorUsername,
         @NotBlank String destination,
         @NotNull LocalDate startDate,
         @NotNull LocalDate endDate,

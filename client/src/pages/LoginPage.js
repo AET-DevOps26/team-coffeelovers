@@ -23,14 +23,14 @@ function LoginPage() {
       if (!res.ok) {
         let message = "Login failed. Please try again.";
         try { const d = await res.json(); message = d.message || message; } catch {}
-        if (res.status === 401 || res.status === 404) message = "Invalid email or password.";
-        else if (res.status === 403) message = "Could not log in. Your account may be disabled or blocked.";
+        if (res.status === 401 || res.status === 403 || res.status === 404) message = "Invalid email or password.";
         throw new Error(message);
       }
       const data = await res.json();
       localStorage.setItem("token", data.token);
       const payload = JSON.parse(atob(data.token.split(".")[1]));
       localStorage.setItem("userId", payload.userId);
+      localStorage.setItem("username", payload.username);
       const redirect = sessionStorage.getItem("redirectAfterLogin");
       if (redirect) { sessionStorage.removeItem("redirectAfterLogin"); navigate(redirect); }
       else navigate("/");
