@@ -18,6 +18,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from src.routers.genai import router as genai_router
+from prometheus_fastapi_instrumentator import Instrumentator
 
 
 app = FastAPI(
@@ -26,6 +27,11 @@ app = FastAPI(
     version="1.0.0",
 )
 
+Instrumentator().instrument(app).expose(
+    app,
+    endpoint="/metrics",
+    include_in_schema=False,
+)
 
 @app.get("/genai/health")
 async def health_check():
