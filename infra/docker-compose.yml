@@ -100,5 +100,19 @@ services:
       - genai
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - auth-service
+      - trip-service
+      - genai
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  prometheus_data:
