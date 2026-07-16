@@ -2,9 +2,9 @@
 
 This directory contains the Docker Compose setup for running the AI Travel Planner locally.
 
-Use this document for infrastructure-level details: Docker Compose services, API Gateway routing, database checks, service logs, and troubleshooting.
+It covers service startup, API Gateway routing, database checks, monitoring, logs, and troubleshooting.
 
-For the short first-time launch guide, see:
+For the short launch guide, see:
 
 ```txt
 ../docs/how-to-launch.md
@@ -12,114 +12,119 @@ For the short first-time launch guide, see:
 
 ## Included Services
 
-The local Docker Compose setup includes:
+The Docker Compose stack includes:
 
-* PostgreSQL database
+* PostgreSQL
 * Auth service
 * Trip service
 * GenAI service
-* Frontend client
+* React client
 * NGINX API Gateway
+* Prometheus
+* Grafana
 
-## API Gateway Architecture
+## Local URLs
 
-The NGINX API Gateway exposes one local API entrypoint:
+| Component | URL |
+| --- | --- |
+| Frontend | `http://localhost:3000` |
+| Grafana | `http://localhost:3001` |
+| GenAI Swagger UI | `http://localhost:8001/docs` |
+| API Gateway | `http://localhost:8080` |
+| Auth service | `http://localhost:8081` |
+| Trip service | `http://localhost:8082` |
+| Prometheus | `http://localhost:9090` |
+| PostgreSQL | `localhost:5432` |
+
+A `404` or `403` on a backend root URL does not always mean the service is unavailable. Use the documented health, API, or metrics endpoints.
+
+## API Gateway
+
+The API Gateway exposes one local API entrypoint:
 
 ```txt
 http://localhost:8080
 ```
 
-The gateway forwards external API paths to internal Docker Compose services:
-
-| External Path     | Internal Target     |
-| ----------------- | ------------------- |
-| `/api/v1/auth/*`  | `auth-service:8081` |
+| External Path | Internal Target |
+| --- | --- |
+| `/api/v1/auth/*` | `auth-service:8081` |
 | `/api/v1/trips/*` | `trip-service:8082` |
-| `/api/v1/genai/*` | `genai:8001`        |
-| `/genai/health`   | `genai:8001`        |
+| `/api/v1/genai/*` | `genai:8001` |
+| `/genai/health` | `genai:8001` |
 
-Auth and Trip services currently use shorter internal paths:
+Auth and Trip use shorter internal paths:
 
 ```txt
 auth-service: /auth/*
 trip-service: /trips/*
 ```
 
-The gateway rewrites the external versioned paths to the internal service paths.
+NGINX rewrites the external versioned paths to these internal paths.
 
-GenAI already exposes versioned API paths directly:
+## Environment Setup
 
-```txt
-genai: /api/v1/genai/*
+From the `infra` directory, copy the root environment example:
+
+```bash
+cp ../.env.example .env
 ```
 
-## Local URLs
+Set the Grafana credentials in `infra/.env`:
 
-| URL                          | Purpose                  |
-| ---------------------------- | ------------------------ |
-| `http://localhost:3000`      | Frontend application     |
-| `http://localhost:8001/docs` | GenAI Swagger UI         |
-| `http://localhost:8080`      | API Gateway root         |
-| `http://localhost:8081`      | Auth service direct port |
-| `http://localhost:8082`      | Trip service direct port |
-| `localhost:5432`             | PostgreSQL database port |
+```properties
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=replace-with-a-local-password
+```
 
-A `404` or `403` on a backend root URL does not necessarily mean the service is broken. Use the frontend or the documented API endpoints for verification.
-
-## Terminal Recommendation
-
-The command examples use `curl`.
-
-Recommended terminals:
-
-* Git Bash
-* WSL
-* Linux terminal
-* macOS terminal
-
-The multiline `curl` examples use `\` for line continuation. This works in Unix-style shells, but not directly in Windows PowerShell.
-
-If you are using Windows, run the examples from Git Bash or WSL.
+Do not commit the real `.env` file.
 
 ## Start the System
 
-From this directory:
+From the `infra` directory:
 
 ```bash
-docker compose up --build
+docker compose --env-file .env up --build
 ```
 
-Or from the repository root:
+Run in the background:
 
 ```bash
-docker compose -f infra/docker-compose.yml up --build
+docker compose --env-file .env up --build -d
+```
+
+From the repository root:
+
+```bash
+docker compose \
+  --env-file infra/.env \
+  -f infra/docker-compose.yml \
+  up --build
 ```
 
 ## Stop the System
-
-From this directory:
 
 ```bash
 docker compose down
 ```
 
-To stop the system and remove local database volumes:
+Remove containers and local volumes:
 
 ```bash
 docker compose down -v
 ```
 
-Use `docker compose down -v` when you want to reset local test data.
+The `-v` option also removes PostgreSQL, Prometheus, and Grafana data.
 
-## Check Docker Compose Services
+## Check Services
 
 List configured services:
 
 ```bash
-docker compose config --services
+docker compose --env-file .env config --services
 ```
 
-Expected result includes:
+Expected services:
 
 ```txt
 postgres
@@ -128,6 +133,8 @@ client
 genai
 trip-service
 gateway
+prometheus
+grafana
 ```
 
 Check running containers:
@@ -136,15 +143,9 @@ Check running containers:
 docker compose ps
 ```
 
-Expected result:
-
-* The main application containers are listed.
-* Running services should show an active/running state.
-* If health checks are configured, healthy services should show a healthy status.
-
 ## Check PostgreSQL
 
-Check database readiness:
+Check readiness:
 
 ```bash
 docker compose exec postgres pg_isready -U coffeelovers
@@ -156,26 +157,14 @@ Expected result:
 accepting connections
 ```
 
-List database tables:
+List tables:
 
 ```bash
-docker compose exec postgres psql -U coffeelovers -d coffeelovers -c "\dt"
+docker compose exec postgres \
+  psql -U coffeelovers -d coffeelovers -c "\dt"
 ```
 
-Expected result includes project tables such as:
-
-```txt
-auth_users
-trips
-```
-
-## Check API Gateway Routes
-
-Use the API Gateway for local API testing:
-
-```txt
-http://localhost:8080
-```
+## Verify APIs
 
 ### GenAI Health
 
@@ -183,7 +172,7 @@ http://localhost:8080
 curl http://localhost:8080/genai/health
 ```
 
-Expected result:
+Expected response:
 
 ```json
 {
@@ -199,7 +188,7 @@ Expected result:
 curl http://localhost:8080/api/v1/trips/health
 ```
 
-Expected result:
+Expected response:
 
 ```json
 {
@@ -208,7 +197,7 @@ Expected result:
 }
 ```
 
-### GenAI Generate
+### Generate Itinerary
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/genai/generate \
@@ -226,12 +215,12 @@ curl -X POST http://localhost:8080/api/v1/genai/generate \
 
 Expected result:
 
-* HTTP 200
+* HTTP `200`
 * Response contains `summary`
 * Response contains `itinerary`
 * Response contains `activities`
 
-### Auth Register
+### Register
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/register \
@@ -243,14 +232,7 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
   }'
 ```
 
-Expected result:
-
-* HTTP 200
-* Response contains authentication data such as a JWT token.
-
-If the same email was already registered, use a different email address or reset the local database volume.
-
-### Auth Login
+### Login
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
@@ -261,173 +243,226 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
   }'
 ```
 
+## Monitoring
+
+Prometheus collects metrics from the services. Grafana uses Prometheus as its default datasource.
+
+```txt
+Auth / Trip / GenAI
+        ↓
+    Prometheus
+        ↓
+      Grafana
+```
+
+### Prometheus
+
+Open:
+
+```txt
+http://localhost:9090
+```
+
+Check targets:
+
+```txt
+http://localhost:9090/targets
+```
+
+Expected targets:
+
+```txt
+prometheus
+auth-service
+trip-service
+genai
+```
+
+All targets should normally be `UP`.
+
+Prometheus scrape configuration:
+
+```txt
+monitoring/prometheus/prometheus.yml
+```
+
+Metrics endpoints:
+
+| Service | Endpoint |
+| --- | --- |
+| Auth | `http://localhost:8081/auth/actuator/prometheus` |
+| Trip | `http://localhost:8082/actuator/prometheus` |
+| GenAI | `http://localhost:8001/metrics` |
+
+Direct checks:
+
+```bash
+curl http://localhost:8081/auth/actuator/prometheus
+curl http://localhost:8082/actuator/prometheus
+curl http://localhost:8001/metrics
+```
+
+### Grafana
+
+Open:
+
+```txt
+http://localhost:3001
+```
+
+Prometheus datasource provisioning:
+
+```txt
+monitoring/grafana/provisioning/datasources/prometheus.yml
+```
+
+The datasource URL must be:
+
+```txt
+http://prometheus:9090
+```
+
+To verify the integration:
+
+1. Open Grafana.
+2. Go to **Explore**.
+3. Select **Prometheus**.
+4. Run:
+
+```promql
+up
+```
+
 Expected result:
 
-* HTTP 200
-* Response contains authentication data such as a JWT token.
+```txt
+up{job="prometheus"} 1
+up{job="auth-service"} 1
+up{job="trip-service"} 1
+up{job="genai"} 1
+```
+
+`1` means the target is available. `0` means the target cannot currently be scraped.
 
 ## Logs
 
-Show recent gateway logs:
+Show service logs:
 
 ```bash
 docker compose logs gateway --tail=100
-```
-
-Expected result:
-
-* Recent gateway access/error logs are printed.
-* Successful requests should show status codes such as `200`.
-
-Useful signs:
-
-```txt
-GET /genai/health 200
-POST /api/v1/genai/generate 200
-GET /api/v1/trips/health 200
-POST /api/v1/auth/register 200
-POST /api/v1/auth/login 200
-```
-
-Follow gateway logs live:
-
-```bash
-docker compose logs -f gateway
-```
-
-Show recent logs for individual services:
-
-```bash
 docker compose logs auth-service --tail=100
 docker compose logs trip-service --tail=100
 docker compose logs genai --tail=100
 docker compose logs client --tail=100
 docker compose logs postgres --tail=100
+docker compose logs prometheus --tail=100
+docker compose logs grafana --tail=100
 ```
 
-Expected result:
+Follow logs continuously:
 
-* The selected service logs are printed.
-* Use these logs to debug startup errors, failed API calls, and routing issues.
+```bash
+docker compose logs -f gateway
+```
+
+Replace `gateway` with another service name when needed.
 
 ## Troubleshooting
 
-### Browser shows 404 or 403
+### Grafana Cannot Connect to Prometheus
 
-This can be normal for API-only services.
-
-Use these pages for browser checks:
-
-```txt
-http://localhost:3000
-http://localhost:8001/docs
-```
-
-Use API endpoints for backend checks:
+Check both containers:
 
 ```bash
-curl http://localhost:8080/genai/health
-curl http://localhost:8080/api/v1/trips/health
+docker compose ps
 ```
 
-### Windows PowerShell and curl
-
-The `curl` examples in this document use Unix-style line continuation with `\`.
-
-This works in:
-
-* Git Bash
-* WSL
-* Linux terminal
-* macOS terminal
-
-It does not work directly in Windows PowerShell.
-
-For Windows users, Git Bash or WSL is recommended for the JSON POST examples.
-
-### Auth or Trip path mismatch
-
-The gateway exposes versioned external paths:
+The datasource must use the Docker service name:
 
 ```txt
-/api/v1/auth/*
-/api/v1/trips/*
+http://prometheus:9090
 ```
 
-Internally, the services currently expose:
-
-```txt
-/auth/*
-/trips/*
-```
-
-The gateway handles this with rewrite rules.
-
-### GenAI path mismatch
-
-The GenAI service exposes versioned paths directly:
-
-```txt
-/api/v1/genai/*
-```
-
-Through the gateway, use:
-
-```txt
-http://localhost:8080/api/v1/genai/*
-```
-
-For health checks, use:
-
-```txt
-http://localhost:8080/genai/health
-```
-
-### Port already in use
-
-If a container fails because a port is already in use, check whether another local process is using one of these ports:
-
-* `3000`
-* `5432`
-* `8001`
-* `8080`
-* `8081`
-* `8082`
-
-Stop the conflicting process or change the local port mapping in Docker Compose.
-
-### Reset local test data
-
-Do not commit real API keys, JWT tokens, passwords, or private credentials.
-
-Test users and database records created locally can be removed by resetting Docker volumes:
+Restart Grafana after provisioning changes:
 
 ```bash
-docker compose down -v
-docker compose up --build
+docker compose restart grafana
 ```
 
-Expected result:
+Check logs:
 
-* Containers are recreated.
-* PostgreSQL volume data is removed.
-* Previously registered local users and saved local data are deleted.
+```bash
+docker compose logs grafana --tail=100
+```
 
-### Rebuild from scratch
+### Prometheus Target Is Down
 
-If containers behave unexpectedly after dependency or Dockerfile changes, rebuild from scratch:
+Open:
+
+```txt
+http://localhost:9090/targets
+```
+
+Check the error for the failed target, then verify its metrics endpoint directly.
+
+Restart Prometheus after configuration changes:
+
+```bash
+docker compose restart prometheus
+```
+
+### Auth Metrics Return `403`
+
+Confirm that Auth Security permits:
+
+```txt
+/auth/actuator/prometheus
+```
+
+Required dependencies:
+
+```gradle
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
+implementation 'io.micrometer:micrometer-registry-prometheus'
+```
+
+Required configuration:
+
+```properties
+management.endpoints.web.base-path=/auth/actuator
+management.endpoints.web.exposure.include=health,info,prometheus
+```
+
+Rebuild Auth after dependency changes:
+
+```bash
+docker compose build --no-cache auth-service
+docker compose up -d --force-recreate auth-service
+```
+
+### Port Already in Use
+
+Check these ports:
+
+```txt
+3000
+3001
+5432
+8001
+8080
+8081
+8082
+9090
+```
+
+Stop the conflicting process or change the relevant Docker port mapping.
+
+### Rebuild From Scratch
 
 ```bash
 docker compose down -v
 docker compose build --no-cache
-docker compose up
+docker compose --env-file .env up
 ```
 
-Expected result:
-
-* Old containers and database volumes are removed.
-* Docker images are rebuilt without cache.
-* The local system starts from a clean state.
-
-```
-```
+This removes local volumes, rebuilds images, and starts the stack from a clean state.
