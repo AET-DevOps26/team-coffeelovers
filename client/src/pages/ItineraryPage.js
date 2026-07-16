@@ -563,7 +563,6 @@ function ActivityRow({ activity, showDivider, isDragging, isDragOver, isSuggesti
 const sectionCard   = { background: "white", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", marginBottom: 12 };
 const sectionTitle  = { fontSize: 15, fontWeight: 600, color: "#374151", margin: "0 0 14px", display: "flex", alignItems: "center", gap: 8 };
 const periodLabel   = { fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#f97316", margin: "0 0 8px" };
-const clockIcon     = { width: 36, height: 36, background: "#f9fafb", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 };
 const durationBadge = { fontSize: 11, fontWeight: 600, color: "#f97316", background: "#fff7ed", padding: "2px 8px", borderRadius: 20 };
 const iconBtn       = { background: "none", border: "none", cursor: "pointer", fontSize: 15, color: "#9ca3af", padding: 2 };
 const dragHandle    = { fontSize: 18, lineHeight: "36px", color: "#cbd5e1", cursor: "grab", flexShrink: 0, userSelect: "none" };
