@@ -17,6 +17,9 @@ public class Trip {
     @Column(nullable = false)
     private Long userId;
 
+    @Column
+    private String authorUsername;
+
     @Column(nullable = false)
     private String destination;
 
@@ -37,6 +40,9 @@ public class Trip {
     @Column(nullable = false)
     private TripStatus status;
 
+    @Column(columnDefinition = "TEXT")
+    private String itineraryJson;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -48,6 +54,7 @@ public class Trip {
 
     public static Trip create(
         Long userId,
+        String authorUsername,
         String destination,
         LocalDate startDate,
         LocalDate endDate,
@@ -56,6 +63,7 @@ public class Trip {
     ) {
         Trip trip = new Trip();
         trip.userId = userId;
+        trip.authorUsername = authorUsername;
         trip.destination = destination;
         trip.startDate = startDate;
         trip.endDate = endDate;
@@ -87,6 +95,14 @@ public class Trip {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getAuthorUsername() {
+        return authorUsername;
+    }
+
+    public void setAuthorUsername(String authorUsername) {
+        this.authorUsername = authorUsername;
     }
 
     public String getDestination() {
@@ -135,6 +151,14 @@ public class Trip {
 
     public void setStatus(TripStatus status) {
         this.status = status;
+    }
+
+    public String getItineraryJson() {
+        return itineraryJson;
+    }
+
+    public void setItineraryJson(String itineraryJson) {
+        this.itineraryJson = itineraryJson;
     }
 
     public Instant getCreatedAt() {
