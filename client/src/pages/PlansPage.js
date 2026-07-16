@@ -214,11 +214,12 @@ export default function PlansPage() {
                         color: "#dc2626",
                         border: "1.5px solid #fecaca",
                         borderRadius: 10,
-                        fontSize: 16,
+                        fontSize: 14,
                         cursor: deletingId === plan.id ? "not-allowed" : "pointer",
                         opacity: deletingId === plan.id ? 0.5 : 1,
+                        display: "flex", alignItems: "center", justifyContent: "center",
                       }}
-                    >{deletingId === plan.id ? "…" : "🗑"}</button>
+                    >{deletingId === plan.id ? "…" : <span style={{ fontSize: 22 }}>🗑</span>}</button>
                   </div>
                 </div>
               </div>
