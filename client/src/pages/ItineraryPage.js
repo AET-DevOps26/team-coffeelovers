@@ -153,7 +153,7 @@ export default function ItineraryPage() {
       .then(r => { if (!r.ok) { throw new Error(`Error ${r.status}`); } return r.json(); })
       .then(data => { setItinerary(mapGenaiResponse(data)); setGenaiLoading(false); })
       .catch(err => { setGenaiError(err.message); setGenaiLoading(false); });
-  }, [tripIdParam, preference, destination, startDate, endDate]);
+  }, [tripIdParam, preference, destination, startDate, endDate, currentUserId]);
 
   const showToast = (msg) => {
     setToast(msg);
