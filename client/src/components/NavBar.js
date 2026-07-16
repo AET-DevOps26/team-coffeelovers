@@ -23,6 +23,10 @@ function Navbar() {
       padding: "16px 36px",
       background: "white",
       borderBottom: "1px solid #e5e7eb",
+      boxShadow: "0 1px 8px rgba(0,0,0,0.05)",
+      position: "sticky",
+      top: 0,
+      zIndex: 500,
     }}>
       <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
         <div style={{

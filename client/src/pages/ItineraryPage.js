@@ -85,7 +85,7 @@ export default function ItineraryPage() {
   const preferenceLabel = PREFERENCE_LABELS[preference] || preference;
 
   const currentUserId = Number(localStorage.getItem("userId")) || null;
-  const [activeTripId, setActiveTripId] = useState(tripIdParam || null);
+  const [activeTripId, setActiveTripId] = useState(null);
   const [tripOwnerId, setTripOwnerId] = useState(null);
   const [tripAuthorUsername, setTripAuthorUsername] = useState(null);
   const [itinerary, setItinerary] = useState(null);
@@ -125,6 +125,9 @@ export default function ItineraryPage() {
           if (trip) {
             setTripOwnerId(trip.userId);
             setTripAuthorUsername(trip.authorUsername);
+            if (currentUserId && trip.userId === currentUserId) {
+              setActiveTripId(tripIdParam);
+            }
           }
         })
         .catch(() => {});
@@ -150,7 +153,7 @@ export default function ItineraryPage() {
       .then(r => { if (!r.ok) { throw new Error(`Error ${r.status}`); } return r.json(); })
       .then(data => { setItinerary(mapGenaiResponse(data)); setGenaiLoading(false); })
       .catch(err => { setGenaiError(err.message); setGenaiLoading(false); });
-  }, [tripIdParam, preference, destination, startDate, endDate]);
+  }, [tripIdParam, preference, destination, startDate, endDate, currentUserId]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -348,9 +351,10 @@ export default function ItineraryPage() {
         padding: "36px 32px 32px",
         position: "relative",
         borderRadius: 16,
+        zIndex: 1,
       }}>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           style={{
             position: "absolute", top: 24, left: 24,
             background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)",
@@ -371,10 +375,10 @@ export default function ItineraryPage() {
 
         <div style={{ position: "absolute", top: 24, right: 24, display: "flex", gap: 10 }}>
           {activeTripId
-            ? <button onClick={handleDelete} style={{ ...headerBtnStyle, background: "#dc2626" }}>Delete Plan</button>
+            ? <button onClick={handleDelete} style={{ ...headerBtnStyle, background: "#dc2626", border: "1px solid #dc2626", color: "white" }}>Delete Plan</button>
             : <button onClick={handleSave} style={headerBtnStyle}>Save Plan</button>
           }
-          <button onClick={() => setShareOpen(true)} style={{ ...headerBtnStyle, background: "white", color: "#1e293b" }}>Share Plan</button>
+          <button onClick={() => setShareOpen(true)} style={{ ...headerBtnStyle, background: "white", border: "1px solid white", color: "#1e293b" }}>Share Plan</button>
         </div>
       </div>
       </div>
@@ -419,8 +423,8 @@ export default function ItineraryPage() {
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 24px 48px" }}>
 
         {/* ── Map ── */}
-        <div style={sectionCard}>
-          <h3 style={sectionTitle}>Activity Map</h3>
+        <div style={mapCard}>
+          <h3 style={sectionTitle}>Map</h3>
           <div style={{ borderRadius: 12, overflow: "hidden", height: 300 }}>
             <MapContainer
               center={mapCenter}
@@ -469,8 +473,10 @@ function DayCard({ day, dayIndex, onMoveActivity, onRemoveActivity, onSuggestAlt
 
   return (
     <div style={{ marginBottom: 32 }}>
+      <div style={{ borderTop: "1.5px solid #e5e7eb", margin: "0 0 14px" }} />
+      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#c0622a", margin: "0 0 2px", textTransform: "uppercase" }}>Day {day.day}</p>
       <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111827", marginBottom: 16 }}>
-        Day {day.day}: {day.title}
+        {day.title}
       </h2>
 
       {["MORNING", "AFTERNOON", "EVENING"].map(period => {
@@ -560,7 +566,8 @@ function ActivityRow({ activity, showDivider, isDragging, isDragOver, isSuggesti
   );
 }
 
-const sectionCard   = { background: "white", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", marginBottom: 12 };
+const sectionCard   = { background: "white", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", marginBottom: 12, borderLeft: "4px solid #c0622a" };
+const mapCard       = { background: "white", borderRadius: 12, padding: "20px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", marginBottom: 12 };
 const sectionTitle  = { fontSize: 15, fontWeight: 600, color: "#374151", margin: "0 0 14px", display: "flex", alignItems: "center", gap: 8 };
 const periodLabel   = { fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#f97316", margin: "0 0 8px" };
 const durationBadge = { fontSize: 11, fontWeight: 600, color: "#f97316", background: "#fff7ed", padding: "2px 8px", borderRadius: 20 };
