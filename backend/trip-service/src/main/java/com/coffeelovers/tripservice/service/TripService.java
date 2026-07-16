@@ -10,6 +10,7 @@ import com.coffeelovers.tripservice.dto.genai.BudgetDto;
 import com.coffeelovers.tripservice.dto.genai.GenerateItineraryRequest;
 import com.coffeelovers.tripservice.dto.genai.GenerateItineraryResponse;
 import com.coffeelovers.tripservice.exception.TripNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import com.coffeelovers.tripservice.mapper.TripMapper;
 import com.coffeelovers.tripservice.model.SharedTrip;
 import com.coffeelovers.tripservice.model.Trip;
@@ -125,8 +126,14 @@ public class TripService {
         return sharedTripRepository.findBySavedByUserIdAndTripId(userId, tripId)
                 .map(this::toSharedTripResponse)
                 .orElseGet(() -> {
-                    SharedTrip saved = sharedTripRepository.save(SharedTrip.create(userId, trip));
-                    return toSharedTripResponse(saved);
+                    try {
+                        SharedTrip saved = sharedTripRepository.save(SharedTrip.create(userId, trip));
+                        return toSharedTripResponse(saved);
+                    } catch (DataIntegrityViolationException e) {
+                        return sharedTripRepository.findBySavedByUserIdAndTripId(userId, tripId)
+                                .map(this::toSharedTripResponse)
+                                .orElseThrow(() -> e);
+                    }
                 });
     }
 
