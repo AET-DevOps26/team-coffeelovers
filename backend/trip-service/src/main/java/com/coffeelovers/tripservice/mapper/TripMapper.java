@@ -12,6 +12,7 @@ public class TripMapper {
     public Trip toEntity(CreateTripRequest request) {
         return Trip.create(
                 request.userId(),
+                request.authorUsername(),
                 request.destination(),
                 request.startDate(),
                 request.endDate(),
@@ -24,6 +25,7 @@ public class TripMapper {
         return new TripResponse(
                 trip.getId(),
                 trip.getUserId(),
+                trip.getAuthorUsername(),
                 trip.getDestination(),
                 trip.getStartDate(),
                 trip.getEndDate(),

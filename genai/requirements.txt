@@ -6,3 +6,5 @@ pytest
 # fastapi testing
 httpx
 langchain-openai
+# monitoring
+prometheus-fastapi-instrumentator

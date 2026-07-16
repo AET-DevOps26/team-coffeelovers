@@ -36,8 +36,9 @@ function RegisterPage() {
       }
       const data = await res.json();
       localStorage.setItem("token", data.token);
-      const payload = JSON.parse(atob(data.token.split(".")[1]));
+      const payload = JSON.parse(atob(data.token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
       localStorage.setItem("userId", payload.userId);
+      localStorage.setItem("username", payload.username);
       navigate("/");
     } catch (err) {
       setError(err.message);
