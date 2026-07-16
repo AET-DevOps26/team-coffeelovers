@@ -84,7 +84,10 @@ export default function ItineraryPage() {
   const tripIdParam = searchParams.get("tripId")      || location.state?.tripId;
   const preferenceLabel = PREFERENCE_LABELS[preference] || preference;
 
+  const currentUserId = Number(localStorage.getItem("userId")) || null;
   const [activeTripId, setActiveTripId] = useState(tripIdParam || null);
+  const [tripOwnerId, setTripOwnerId] = useState(null);
+  const [tripAuthorUsername, setTripAuthorUsername] = useState(null);
   const [itinerary, setItinerary] = useState(null);
   const [genaiLoading, setGenaiLoading] = useState(true);
   const [genaiError, setGenaiError] = useState(null);
@@ -113,6 +116,19 @@ export default function ItineraryPage() {
     })();
 
     if (tripIdParam) {
+      // Fetch trip metadata to check ownership (only if logged in)
+      if (token) fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripIdParam}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(trip => {
+          if (trip) {
+            setTripOwnerId(trip.userId);
+            setTripAuthorUsername(trip.authorUsername);
+          }
+        })
+        .catch(() => {});
+
       // Viewing a saved plan — fetch itinerary via trip-service
       fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${tripIdParam}/itinerary`, {
         method: "POST",
@@ -230,6 +246,7 @@ export default function ItineraryPage() {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         userId: parsedUserId,
+        authorUsername: localStorage.getItem("username"),
         destination,
         startDate: startDate || new Date().toISOString().slice(0, 10),
         endDate: endDate || new Date().toISOString().slice(0, 10),
@@ -257,6 +274,18 @@ export default function ItineraryPage() {
   const buildShareUrl = () => {
     const p = new URLSearchParams({ destination, start: startDate || "", end: endDate || "", preference, ...(activeTripId && { tripId: activeTripId }) });
     return `${window.location.origin}/itinerary?${p.toString()}`;
+  };
+
+  const handleSaveShared = () => {
+    if (!currentUserId || !activeTripId) return;
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/${activeTripId}/save-shared`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+      body: JSON.stringify({ userId: currentUserId }),
+    })
+      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
+      .then(() => showToast("Saved to your plans!"))
+      .catch(err => showToast(`Could not save: ${err.message}`));
   };
 
   const handleCopyLink = () => {
@@ -290,6 +319,27 @@ export default function ItineraryPage() {
     <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", background: "#f3f4f6", minHeight: "100vh" }}>
 
       <Navbar />
+
+      {/* ── Shared-by banner ── */}
+      {tripIdParam && currentUserId && tripOwnerId && currentUserId !== tripOwnerId && (
+        <div style={{
+          background: "#1e293b", color: "white",
+          padding: "12px 24px", display: "flex", alignItems: "center",
+          justifyContent: "center", gap: 16, fontSize: 14,
+        }}>
+          <span>
+            Shared by <strong>{tripAuthorUsername || "someone"}</strong> — save it to your plans?
+          </span>
+          <button
+            onClick={handleSaveShared}
+            style={{
+              background: "#c0622a", color: "white", border: "none",
+              borderRadius: 8, padding: "6px 16px", fontWeight: 700,
+              fontSize: 13, cursor: "pointer",
+            }}
+          >Save to My Plans</button>
+        </div>
+      )}
 
       {/* ── Header card ── */}
       <div style={{ maxWidth: 860, margin: "24px auto 28px", padding: "0 24px" }}>
@@ -346,6 +396,7 @@ export default function ItineraryPage() {
           <dialog open aria-labelledby="share-modal-title" style={{
             position: "fixed", top: "50%", left: "50%",
             transform: "translate(-50%, -50%)",
+            margin: 0,
             background: "white", borderRadius: 16, padding: "32px 36px",
             width: 380, border: "none",
             boxShadow: "0 16px 48px rgba(0,0,0,0.2)", zIndex: 1001,

@@ -33,8 +33,11 @@ function getDays(startDate, endDate) {
 export default function PlansPage() {
   const [tab, setTab] = useState("mine");
   const [plans, setPlans] = useState([]);
+  const [sharedPlans, setSharedPlans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sharedLoading, setSharedLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sharedError, setSharedError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const navigate = useNavigate();
 
@@ -53,9 +56,11 @@ export default function PlansPage() {
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
-    if (!userId) { setLoading(false); return; }
+    if (!userId) { setLoading(false); setSharedLoading(false); return; }
+    const token = localStorage.getItem("token");
+
     fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/user/${userId}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
       .then(data => {
@@ -70,6 +75,25 @@ export default function PlansPage() {
         setLoading(false);
       })
       .catch(err => { setError(err.message); setLoading(false); });
+
+    fetch(`${process.env.REACT_APP_TRIP_API_URL}/trips/shared/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => { if (!r.ok) throw new Error(`Error ${r.status}`); return r.json(); })
+      .then(data => {
+        setSharedPlans(data.map(t => ({
+          id: t.id,
+          tripId: t.tripId,
+          destination: t.destination,
+          startDate: t.startDate,
+          endDate: t.endDate,
+          preference: TRIP_TYPE_TO_PREFERENCE[t.tripType] || "mixed",
+          authorUsername: t.authorUsername,
+          savedAt: t.savedAt ? t.savedAt.slice(0, 10) : "",
+        })));
+        setSharedLoading(false);
+      })
+      .catch(err => { setSharedError(err.message); setSharedLoading(false); });
   }, []);
 
   return (
@@ -95,7 +119,44 @@ export default function PlansPage() {
       </div>
 
       {tab === "shared" ? (
-        <p style={{ color: "#9ca3af", fontSize: 14 }}>No plans have been shared with you yet.</p>
+        sharedLoading ? (
+          <p style={{ color: "#6b7280", fontSize: 14 }}>Loading shared plans…</p>
+        ) : sharedError ? (
+          <p style={{ color: "#dc2626", fontSize: 14 }}>Could not load shared plans: {sharedError}</p>
+        ) : sharedPlans.length === 0 ? (
+          <p style={{ color: "#9ca3af", fontSize: 14 }}>No plans have been shared with you yet.</p>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 24 }}>
+            {sharedPlans.map(plan => {
+              const days = getDays(plan.startDate, plan.endDate);
+              const img = PREFERENCE_IMAGES[plan.preference] || PREFERENCE_IMAGES.popular;
+              const prefLabel = PREFERENCE_LABELS[plan.preference] || plan.preference;
+              return (
+                <div key={plan.id} style={{ background: "white", borderRadius: 14, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", overflow: "hidden" }}>
+                  <div style={{ height: 160, background: `url('${img}') center/cover no-repeat` }} />
+                  <div style={{ padding: "16px 18px 18px" }}>
+                    <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111827", margin: "0 0 4px" }}>{plan.destination}</h2>
+                    {plan.authorUsername && (
+                      <p style={{ fontSize: 12, color: "#c0622a", fontWeight: 600, margin: "0 0 6px" }}>Shared by {plan.authorUsername}</p>
+                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#6b7280", marginBottom: 4 }}>
+                      <span>📅</span>
+                      {Boolean(days) && <span>{days} day{days === 1 ? "" : "s"}</span>}
+                      <span style={{ color: "#c0622a", fontWeight: 600 }}>{prefLabel}</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const p = new URLSearchParams({ destination: plan.destination, start: plan.startDate, end: plan.endDate, preference: plan.preference, tripId: plan.tripId });
+                        navigate(`/itinerary?${p.toString()}`);
+                      }}
+                      style={{ width: "100%", padding: "11px", background: "#1e293b", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 10 }}
+                    >View Itinerary</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
       ) : loading ? (
         <p style={{ color: "#6b7280", fontSize: 14 }}>Loading your plans…</p>
       ) : error ? (
