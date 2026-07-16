@@ -439,7 +439,7 @@ export default function ItineraryPage() {
         {/* ── Days ── */}
         {genaiLoading && (
           <div style={{ textAlign: "center", padding: "48px 0", color: "#6b7280", fontSize: 15 }}>
-            Generating your itinerary with AI…
+            {tripIdParam ? "Loading itinerary…" : "Generating your itinerary with AI…"}
           </div>
         )}
         {genaiError && (
@@ -535,7 +535,6 @@ function ActivityRow({ activity, showDivider, isDragging, isDragOver, isSuggesti
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "14px 0" }}>
         <div style={dragHandle} title="Drag to reorder">⠿</div>
-        <div style={clockIcon}>🕐</div>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
