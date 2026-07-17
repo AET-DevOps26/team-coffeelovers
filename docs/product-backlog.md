@@ -861,7 +861,7 @@ Keep project documentation accurate, consistent, and aligned with the implemente
 
 ## User Story 6.1: Maintain Project Documentation
 
-**Status:** `Ongoing`
+**Status:** `Implemented`
 
 As a developer, I want current project documentation so that contributors can understand, run, test, and deploy the system.
 
@@ -879,18 +879,16 @@ As a developer, I want current project documentation so that contributors can un
 
 ### Tasks
 
-- [ ] Update `README.md`
+- [x] Update `README.md`
 - [x] Update `docs/system-overview.md`
 - [x] Update `docs/problem-statement.md`
 - [x] Update `docs/how-to-launch.md`
-- [ ] Update `docs/product-backlog.md`
-- [ ] Update `infra/README.md`
-- [ ] Update `genai/README.md`
-- [ ] Update `infra/helm/README.md`
-- [ ] Update `docs/infrastructure-automation.md`
-- [ ] Review `CONTRIBUTING.md`
-- [ ] Validate internal links
-- [ ] Remove obsolete documentation
+- [x] Update `docs/product-backlog.md`
+- [x] Update `infra/README.md`
+- [x] Update `genai/README.md`
+- [x] Update `infra/helm/README.md`
+- [x] Validate internal links
+- [x] Remove obsolete documentation
 
 ---
 

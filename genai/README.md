@@ -1,44 +1,76 @@
 # GenAI Service
 
-The GenAI service is the independent Python/FastAPI microservice of the AI Travel Planner application.
+The GenAI Service is the independent Python and FastAPI microservice of the AI Travel Planner.
 
-It generates personalized travel itineraries and supports multiple LLM providers through a provider-based architecture.
+It is responsible for:
 
-Supported providers:
+- generating structured travel itineraries
+- producing alternative activity suggestions
+- building prompts from trip information
+- validating structured LLM responses
+- isolating provider-specific AI logic from the rest of the application
+- exposing Prometheus-compatible metrics
+
+## Supported Providers
 
 | Provider | Status | Purpose |
-| --- | --- | --- |
+|---|---|---|
 | `mock` | Implemented | Deterministic local development and CI |
-| `openai` | Implemented | OpenAI models through LangChain |
-| `logos` | Implemented | TUM Logos through its OpenAI-compatible API |
+| `openai` | Implemented | OpenAI models through `langchain-openai` |
+| `logos` | Implemented | TUM Logos through an OpenAI-compatible API |
 
-The default provider is `mock`, so the service and CI can run without external API credentials.
+The default provider is `mock`.
 
----
+The mock provider allows the service and automated tests to run without:
+
+- external API credentials
+- network access
+- API quota
+- external provider costs
 
 ## Architecture
 
 ```txt
-HTTP request
-    ↓
-FastAPI router
-    ↓
-Itinerary service
-    ↓
-Provider factory
-    ↓
-MockProvider / OpenAIProvider / LogosProvider
-    ↓
-Prompt formatting
-    ↓
-Response validation
-    ↓
-HTTP response
+HTTP Request
+    |
+    v
+FastAPI Router
+    |
+    v
+Itinerary Service
+    |
+    v
+Provider Factory
+    |
+    +----------------+----------------+----------------+
+    |                |                |
+    v                v                v
+Mock Provider    OpenAI Provider   Logos Provider
+    |                |                |
+    +----------------+----------------+
+                     |
+                     v
+             Response Validation
+                     |
+                     v
+               HTTP Response
 ```
 
-The active provider is selected through environment variables. No API route or application code changes are required when switching providers.
+The active provider is selected through environment configuration.
 
----
+Routes and service logic remain independent from the selected provider.
+
+## Technology
+
+```txt
+Python 3.12
+FastAPI
+Pydantic
+Uvicorn
+langchain-openai
+prometheus-fastapi-instrumentator
+pytest
+```
 
 ## Project Structure
 
@@ -60,129 +92,195 @@ genai/
 │   └── services/
 │       └── itinerary_service.py
 ├── tests/
-├── .env.example
 ├── requirements.txt
 ├── Dockerfile
 └── README.md
 ```
 
----
-
 ## API Endpoints
 
 | Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/genai/health` | Returns the GenAI service status |
+|---|---|---|
+| `GET` | `/genai/health` | Returns the service health status |
 | `POST` | `/api/v1/genai/generate` | Generates a structured travel itinerary |
-| `POST` | `/api/v1/genai/suggest` | Returns travel preference suggestions |
-| `GET` | `/docs` | Opens FastAPI Swagger UI |
+| `POST` | `/api/v1/genai/suggest` | Generates alternative activity suggestions |
+| `GET` | `/metrics` | Exposes Prometheus-compatible metrics |
+| `GET` | `/docs` | Opens the FastAPI Swagger UI |
 
-The public API contract remains the same for all providers.
+The public API contract is provider-independent.
 
----
+The OpenAPI contract is stored at:
 
-# Environment Configuration
+```txt
+api/openapi.yaml
+```
 
-Create a local environment file:
+Request and response models must remain aligned with this contract.
+
+## Generate Request
+
+The generation endpoint accepts:
+
+- destination
+- number of travel days
+- travel preferences
+- optional budget information
+
+Example:
+
+```json
+{
+  "destination": "Maastricht",
+  "days": 2,
+  "preferences": [
+    "old town",
+    "local food"
+  ],
+  "budget": {
+    "amount": 250,
+    "currency": "EUR"
+  }
+}
+```
+
+Budget support currently exists at the GenAI API level.
+
+The frontend does not currently collect budget information, and budget is not yet integrated into the complete frontend and backend workflow.
+
+## Environment Configuration
+
+Environment configuration depends on how the service is started.
+
+### Standalone GenAI Development
+
+When running only the GenAI service locally, create:
 
 ```txt
 genai/.env
 ```
 
-Use one provider configuration at a time.
+### Complete Docker Compose Stack
+
+When running the complete application, Docker Compose reads configuration from:
+
+```txt
+infra/.env
+```
+
+Do not mix the two environment file locations.
+
+Use only the environment file that matches the selected execution mode.
 
 ## Mock Provider
 
-```env
+```properties
 GENAI_PROVIDER=mock
 GENAI_LOG_LEVEL=INFO
 ```
 
-Mock mode:
+Use the mock provider for:
 
-- does not require an API key,
-- does not call an external LLM,
-- is used by default,
-- is suitable for local development and CI.
+- local development
+- CI
+- unit tests
+- API contract testing
+- development without external API access
 
----
+The mock provider does not require an API key.
 
 ## OpenAI Provider
 
-```env
+```properties
 GENAI_PROVIDER=openai
 GENAI_LOG_LEVEL=INFO
 
-OPENAI_API_KEY=<your-openai-api-key>
+OPENAI_API_KEY=replace-with-your-api-key
 OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4o-mini
 ```
 
-The OpenAI provider uses LangChain and `langchain-openai`.
+The OpenAI provider uses `langchain-openai`.
 
-Do not commit, print, or share the API key.
+The API key must be supplied through environment configuration.
 
----
+Do not commit, print, log, or share the API key.
 
 ## Logos Provider
 
-```env
+```properties
 GENAI_PROVIDER=logos
 GENAI_LOG_LEVEL=INFO
 
-LOGOS_API_KEY=<your-lg-key>
+LOGOS_API_KEY=replace-with-your-logos-key
 LOGOS_BASE_URL=https://logos.aet.cit.tum.de/v1
 LOGOS_MODEL=openai/gpt-oss-120b
 ```
 
 Logos uses an OpenAI-compatible API.
 
-Important:
+Requirements:
 
-- the API key normally starts with `lg-`,
-- the model name must include the `openai/` prefix,
-- the base URL must include `/v1`,
-- TUM network access is required,
-- connect to eduVPN when working outside the TUM network.
+- the API key must be valid
+- the base URL must include `/v1`
+- the model name must include the required provider prefix
+- access to the TUM network may be required
+- eduVPN may be required outside the TUM network
 
 Do not commit or share the Logos API key.
 
----
+## Local Development
 
-# Local Development
-
-## Requirements
+### Requirements
 
 Install:
 
 - Python 3.12
 - pip
 
-Create a virtual environment from the repository root:
+### Create a Virtual Environment
+
+From the repository root:
 
 ```bash
 python -m venv genai/.venv
 ```
 
-Activate it:
+Activate it on Linux, macOS, or WSL:
 
 ```bash
 source genai/.venv/bin/activate
 ```
 
-On Git Bash for Windows:
+Activate it on Git Bash for Windows:
 
 ```bash
 source genai/.venv/Scripts/activate
 ```
 
-Install dependencies:
+### Install Dependencies
 
 ```bash
 pip install -r genai/requirements.txt
 ```
 
-Start the GenAI service:
+### Configure the Service
+
+Create:
+
+```txt
+genai/.env
+```
+
+For local development, use:
+
+```properties
+GENAI_PROVIDER=mock
+GENAI_LOG_LEVEL=INFO
+```
+
+### Start the Service
+
+From the repository root:
 
 ```bash
 cd genai
@@ -201,176 +299,57 @@ Swagger UI:
 http://localhost:8001/docs
 ```
 
----
+Metrics:
 
-# Run the Complete Application with Docker Compose
-
-Docker Compose is the recommended way to start the complete application.
-
-The following services are started:
-
-- React frontend,
-- Auth service,
-- Trip service,
-- GenAI service,
-- PostgreSQL,
-- NGINX API Gateway.
-
-## Requirements
-
-Install and start:
-
-- Docker
-- Docker Compose
-
-For Logos, connect to TUM eduVPN before starting Docker.
-
----
-
-## Start the Complete Application
-
-From the repository root:
-
-```bash
-cd infra
-docker compose up --build --force-recreate
+```txt
+http://localhost:8001/metrics
 ```
 
-Docker Compose reads the provider configuration from:
+## Run with Docker Compose
+
+The recommended way to run the complete application is Docker Compose.
+
+Docker Compose configuration:
+
+```txt
+infra/docker-compose.yml
+```
+
+Environment configuration:
 
 ```txt
 infra/.env
 ```
 
-Keep the terminal open while using the application.
-
-Check the running services:
+From the repository root:
 
 ```bash
-docker compose ps
+docker compose \
+  --env-file infra/.env \
+  -f infra/docker-compose.yml \
+  up --build
 ```
 
-Expected services:
+Detailed Docker Compose instructions, service checks, monitoring, logs, and troubleshooting are documented in:
 
 ```txt
-postgres
-auth-service
-trip-service
-genai
-gateway
-client
+infra/README.md
 ```
 
----
+## Test the API
 
-## Application URLs
+### Health Check
 
-| Component | URL |
-| --- | --- |
-| Frontend UI | `http://localhost:3000` |
-| API Gateway | `http://localhost:8080` |
-| GenAI direct API | `http://localhost:8001` |
-| GenAI Swagger UI | `http://localhost:8001/docs` |
-| Auth service | `http://localhost:8081` |
-| Trip service | `http://localhost:8082` |
-
-Use the frontend for the normal application workflow.
-
-Use the API Gateway for manual API testing.
-
----
-
-# Test through the User Interface
-
-Open:
-
-```txt
-http://localhost:3000
-```
-
-Use the travel planning workflow:
-
-1. Enter a destination.
-2. Select the travel duration.
-3. Select travel preferences.
-4. Enter a budget when available.
-5. Generate the itinerary.
-
-Expected application flow:
-
-```txt
-Frontend
-    ↓
-Trip service
-    ↓
-GenAI service
-    ↓
-Configured provider
-    ↓
-Generated itinerary
-    ↓
-Frontend
-```
-
-To verify that the UI request reaches GenAI, open another terminal:
-
-```bash
-cd infra
-docker compose logs -f genai
-```
-
-Generate an itinerary from the UI.
-
-A successful request should produce a log similar to:
-
-```txt
-POST /api/v1/genai/generate 200
-```
-
-If no request appears in the GenAI logs, the frontend or Trip service is not reaching the GenAI service.
-
----
-
-# Verify the Active Provider
-
-From the `infra` directory:
-
-```bash
-docker compose exec genai python -c "from src.config import get_settings; from src.providers.factory import create_provider; s=get_settings(); print(s.provider, type(create_provider()).__name__)"
-```
-
-Expected output for mock:
-
-```txt
-GenAIProvider.MOCK MockProvider
-```
-
-Expected output for OpenAI:
-
-```txt
-GenAIProvider.OPENAI OpenAIProvider
-```
-
-Expected output for Logos:
-
-```txt
-GenAIProvider.LOGOS LogosProvider
-```
-
----
-
-# Test through the Terminal
-
-The recommended local API entrypoint is the API Gateway:
-
-```txt
-http://localhost:8080
-```
-
-## Health Check
+Through the API Gateway:
 
 ```bash
 curl http://localhost:8080/genai/health
+```
+
+Directly:
+
+```bash
+curl http://localhost:8001/genai/health
 ```
 
 Expected response:
@@ -383,13 +362,12 @@ Expected response:
 }
 ```
 
----
-
 ## Generate an Itinerary
 
+Through the API Gateway:
+
 ```bash
-curl -X POST \
-  http://localhost:8080/api/v1/genai/generate \
+curl -X POST http://localhost:8080/api/v1/genai/generate \
   -H "Content-Type: application/json" \
   -d '{
     "destination": "Maastricht",
@@ -398,6 +376,29 @@ curl -X POST \
       "old town",
       "local food",
       "photo spots"
+    ]
+  }'
+```
+
+Expected response content includes:
+
+```txt
+summary
+itinerary
+activities
+```
+
+The optional budget field can be tested directly at the GenAI API level:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/genai/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "destination": "Maastricht",
+    "days": 2,
+    "preferences": [
+      "old town",
+      "local food"
     ],
     "budget": {
       "amount": 250,
@@ -406,17 +407,9 @@ curl -X POST \
   }'
 ```
 
-Expected response fields:
+This does not mean budget is available in the current frontend workflow.
 
-```txt
-summary
-itinerary
-activities
-```
-
----
-
-# Test through Swagger UI
+## Test with Swagger UI
 
 Open:
 
@@ -430,44 +423,85 @@ Select:
 POST /api/v1/genai/generate
 ```
 
-Click:
+Use **Try it out**, provide a valid request body, and select **Execute**.
 
-```txt
-Try it out
-```
-
-Use:
-
-```json
-{
-  "destination": "Maastricht",
-  "days": 2,
-  "preferences": [
-    "old town",
-    "local food"
-  ],
-  "budget": {
-    "amount": 250,
-    "currency": "EUR"
-  }
-}
-```
-
-Click:
-
-```txt
-Execute
-```
-
-Expected result:
+A valid request should return:
 
 ```txt
 HTTP 200
 ```
 
----
+## Verify the Active Provider
 
-# Run Tests
+When running with Docker Compose, execute from the `infra` directory:
+
+```bash
+docker compose exec genai python -c \
+  "from src.config import get_settings; \
+from src.providers.factory import create_provider; \
+s = get_settings(); \
+print(s.provider, type(create_provider()).__name__)"
+```
+
+Expected mock output:
+
+```txt
+GenAIProvider.MOCK MockProvider
+```
+
+Expected OpenAI output:
+
+```txt
+GenAIProvider.OPENAI OpenAIProvider
+```
+
+Expected Logos output:
+
+```txt
+GenAIProvider.LOGOS LogosProvider
+```
+
+After changing provider configuration, recreate the GenAI container:
+
+```bash
+docker compose \
+  --env-file .env \
+  up -d --build --force-recreate genai
+```
+
+## Monitoring
+
+The GenAI service exposes Prometheus-compatible metrics at:
+
+```txt
+/metrics
+```
+
+Direct local URL:
+
+```txt
+http://localhost:8001/metrics
+```
+
+The service uses:
+
+```txt
+prometheus-fastapi-instrumentator
+```
+
+Prometheus scrapes the service through the internal Docker target:
+
+```txt
+genai:8001/metrics
+```
+
+Prometheus and Grafana configuration is documented in:
+
+```txt
+infra/README.md
+```
+
+## Run Tests
 
 Activate the virtual environment:
 
@@ -494,209 +528,158 @@ cd genai
 pytest
 ```
 
-Run only OpenAI provider tests:
+Run a specific test file:
 
 ```bash
-pytest tests/test_openai_provider.py -v
+pytest tests/<test-file>.py -v
 ```
 
-Run only Logos provider tests:
+Provider tests must use fake or mocked chat models.
 
-```bash
-pytest tests/test_logos_provider.py -v
-```
+Automated tests must not:
 
-The tests use fake or mocked chat models.
+- call the real OpenAI API
+- call the real Logos API
+- require API keys
+- require TUM network access
+- consume external API quota
 
-They do not:
+## Logs
 
-- call the real OpenAI API,
-- call the real Logos API,
-- require API keys,
-- require TUM network access,
-- consume external API quota.
-
----
-
-# View Logs
-
-Show recent GenAI logs:
+When running with Docker Compose:
 
 ```bash
 cd infra
 docker compose logs genai --tail=100
 ```
 
-Follow GenAI logs:
+Follow the logs:
 
 ```bash
 docker compose logs -f genai
 ```
 
-Show API Gateway logs:
+A successful generation request should produce an entry similar to:
 
-```bash
-docker compose logs gateway --tail=100
+```txt
+POST /api/v1/genai/generate 200
 ```
 
-Show all service logs:
+General Docker Compose logging instructions are maintained in:
 
-```bash
-docker compose logs --tail=100
+```txt
+infra/README.md
 ```
 
----
+## Troubleshooting
 
-# Stop the Application
+### The Wrong Provider Is Active
 
-Stop all containers:
+Verify the active provider:
 
 ```bash
 cd infra
-docker compose down
+docker compose exec genai python -c \
+  "from src.config import get_settings; \
+from src.providers.factory import create_provider; \
+s = get_settings(); \
+print(s.provider, type(create_provider()).__name__)"
 ```
 
-Stop the containers and remove local database volumes:
-
-```bash
-docker compose down -v
-```
-
-Use `down -v` only when local database data should be deleted.
-
----
-
-# Troubleshooting
-
-## Docker Engine Is Not Running
-
-Error:
+Confirm that the correct environment file was edited:
 
 ```txt
-failed to connect to the docker API
-dockerDesktopLinuxEngine
+Standalone service: genai/.env
+Complete stack:    infra/.env
 ```
 
-Start Docker Desktop and verify:
-
-```bash
-docker ps
-```
-
----
-
-## Docker Compose Cannot Find the Configuration
-
-Error:
-
-```txt
-no configuration file provided
-```
-
-Run Docker Compose from the `infra` directory:
-
-```bash
-cd infra
-```
-
-Or specify the Compose file explicitly:
+Recreate the GenAI container after changing the complete-stack configuration:
 
 ```bash
 docker compose \
-  -f infra/docker-compose.yml \
-  --env-file genai/.env \
-  up --build
+  --env-file .env \
+  up -d --build --force-recreate genai
 ```
 
----
+### OpenAI API Key Is Missing
 
-## The Mock Provider Is Still Active
+Confirm that the active environment file contains:
 
-Verify the selected provider:
-
-```bash
-cd infra
-
-docker compose exec genai python -c "from src.config import get_settings; from src.providers.factory import create_provider; s=get_settings(); print(s.provider, type(create_provider()).__name__)"
-```
-
-Recreate the containers after changing `genai/.env`:
-
-```bash
-docker compose down
-
-docker compose \
-  --env-file ../genai/.env \
-  up --build --force-recreate
-```
-
----
-
-## OpenAI API Key Is Missing
-
-Check that `genai/.env` contains:
-
-```env
+```properties
 GENAI_PROVIDER=openai
-OPENAI_API_KEY=<your-api-key>
+OPENAI_API_KEY=replace-with-your-api-key
 ```
 
-Restart the containers after changing the file.
+Restart or recreate the service after changing configuration.
 
----
+### OpenAI Authentication Error
 
-## OpenAI Authentication or Quota Error
-
-Possible errors:
-
-```txt
-401 invalid_api_key
-```
-
-The API key is invalid or inactive.
-
-```txt
-429 insufficient_quota
-```
-
-The OpenAI account has no available API quota or billing.
-
----
-
-## Logos Is Unreachable
+An HTTP `401` response usually indicates an invalid or inactive API key.
 
 Check:
 
-- TUM eduVPN is connected,
-- `LOGOS_API_KEY` is valid,
-- the base URL includes `/v1`,
-- the model is `openai/gpt-oss-120b`.
+- the configured key
+- whitespace in the environment value
+- whether the correct environment file is being used
 
-Inspect the GenAI logs:
+### OpenAI Quota Error
+
+An HTTP `429` response may indicate that the OpenAI account has no available API quota or billing balance.
+
+The application cannot resolve provider quota or billing issues.
+
+Use the mock provider for local development when external quota is unavailable.
+
+### Logos Is Unreachable
+
+Check:
+
+- TUM eduVPN connectivity
+- `LOGOS_API_KEY`
+- `LOGOS_BASE_URL`
+- `LOGOS_MODEL`
+- GenAI container logs
 
 ```bash
 cd infra
 docker compose logs genai --tail=100
 ```
 
----
+The host may have network access while the Docker container does not have access to the same VPN route.
 
-## Docker Cannot Reach Logos through eduVPN
+### Invalid Provider Response
 
-The host computer may reach Logos while the Docker container cannot use the VPN route.
+External providers may return content that does not match the required schema.
 
-First test Logos outside Docker.
+The service must:
 
-Then inspect the container logs:
+- validate the response
+- return a controlled application error
+- avoid returning unvalidated content
+- log enough context for debugging without logging secrets
+
+### Metrics Are Missing
+
+Confirm that the service is running:
+
+```bash
+curl http://localhost:8001/genai/health
+```
+
+Check the metrics endpoint:
+
+```bash
+curl http://localhost:8001/metrics
+```
+
+Check GenAI logs:
 
 ```bash
 cd infra
 docker compose logs genai --tail=100
 ```
 
----
-
-# Security
+## Security
 
 Never commit:
 
@@ -705,26 +688,36 @@ genai/.env
 infra/.env
 API keys
 JWT tokens
+passwords
 private credentials
 ```
 
-Only `.env.example` should be committed.
+Only environment example files should be committed.
 
-Verify before committing:
+Check pending changes before committing:
 
 ```bash
 git status
 ```
 
----
+Avoid logging:
 
-# Development Rules
+- API keys
+- authorization headers
+- complete environment variables
+- user credentials
+- provider secrets
+
+## Development Rules
 
 - Keep FastAPI routes independent from provider-specific logic.
 - Select providers through the provider factory.
+- Keep the mock provider deterministic.
 - Keep `mock` as the default provider.
 - Keep API keys outside the repository.
+- Validate all provider responses.
 - Do not call real external APIs in unit tests.
-- Keep tests passing before opening a pull request.
-- Update this README when providers, environment variables, dependencies, endpoints, or setup instructions change.
 - Keep the implementation aligned with `api/openapi.yaml`.
+- Add or update tests when provider behavior changes.
+- Update this README when providers, environment variables, endpoints, dependencies, or setup instructions change.
+- Keep complete-stack Docker instructions in `infra/README.md`.
