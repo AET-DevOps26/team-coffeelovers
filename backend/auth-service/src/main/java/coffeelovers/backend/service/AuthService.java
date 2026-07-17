@@ -9,8 +9,10 @@ import coffeelovers.backend.repository.AuthUserRepository;
 import coffeelovers.backend.security.JwtService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService implements AuthServiceInterface {
@@ -38,12 +40,12 @@ public class AuthService implements AuthServiceInterface {
 
         if (authUserRepository.existsByEmail(request.getEmail())) {
             logger.warn("Register failed. Email already in use: {}", request.getEmail());
-            throw new RuntimeException("Email is already in use");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already in use");
         }
 
         if (authUserRepository.existsByUserName(request.getUsername())) {
             logger.warn("Register failed. Username already in use: {}", request.getUsername());
-            throw new RuntimeException("Username is already in use");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already in use");
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
