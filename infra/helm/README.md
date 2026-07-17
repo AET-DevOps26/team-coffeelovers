@@ -29,7 +29,7 @@ If you're setting this up on a **brand new** cluster for the first time (no exis
 ```bash
 POSTGRES_PASSWORD=<postgres-password> \
 JWT_SECRET=<jwt-secret> \
-OPENAI_API_KEY=<openai-api-key> \
+LOGOS_API_KEY=<logos-api-key> \
 ./deploy.sh
 ```
 
@@ -45,7 +45,7 @@ helm upgrade --install coffeelovers ./infra/helm/coffeelovers \
   --create-namespace \
   --set-string secrets.postgresPassword="<postgres-password>" \
   --set-string secrets.jwtSecret="<jwt-secret>" \
-  --set-string secrets.openaiApiKey="<openai-api-key>" \
+  --set-string secrets.logosApiKey="<logos-api-key>" \
   --wait --timeout 5m
 ```
 

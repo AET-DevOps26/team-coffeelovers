@@ -143,7 +143,7 @@ Email: testuser@example.com
 Password: Password123!
 ```
 
-Use a different email address when the user already exists.
+The form validates password confirmation in real time. If the email or username is already registered, the backend returns HTTP 409 and the form shows "An account with this email or username already exists."
 
 To remove all local users and database data, follow the reset instructions in [Reset Local Data](#10-reset-local-data).
 
@@ -186,9 +186,11 @@ The Trip Service should persist the trip data in PostgreSQL.
 
 ### 6.5 Share the Trip
 
-Use the sharing option for the generated trip.
+1. On a saved itinerary, click **Share Plan**.
+2. Click **Copy Link** to copy the shareable URL.
+3. Open the link in a different browser or incognito window.
 
-The application should generate a link that can be used to view the shared trip.
+When a logged-in non-owner opens the link, a banner appears: "Shared by \<username\> — save it to your plans?" with a **Save to My Plans** button. When a logged-out visitor opens the link, the banner shows "This plan was shared with you — log in to save it to your account" with a **Log in to save** button. Saved shared trips appear in the **Shared with me** tab on the My Plans page.
 
 ## 7. Verify the Services
 

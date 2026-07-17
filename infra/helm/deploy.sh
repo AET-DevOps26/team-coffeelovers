@@ -7,12 +7,12 @@
 # manual redeploys, or tutor verification — not as a replacement for that flow.
 #
 # Usage:
-#   POSTGRES_PASSWORD=... JWT_SECRET=... OPENAI_API_KEY=... ./deploy.sh
+#   POSTGRES_PASSWORD=... JWT_SECRET=... LOGOS_API_KEY=... ./deploy.sh
 #
 # Required environment variables:
 #   POSTGRES_PASSWORD
 #   JWT_SECRET
-#   OPENAI_API_KEY
+#   LOGOS_API_KEY
 
 set -euo pipefail
 
@@ -24,13 +24,13 @@ RELEASE_NAME="coffeelovers"
 missing=()
 [ -z "${POSTGRES_PASSWORD:-}" ] && missing+=("POSTGRES_PASSWORD")
 [ -z "${JWT_SECRET:-}" ] && missing+=("JWT_SECRET")
-[ -z "${OPENAI_API_KEY:-}" ] && missing+=("OPENAI_API_KEY")
+[ -z "${LOGOS_API_KEY:-}" ] && missing+=("LOGOS_API_KEY")
 
 if [ ${#missing[@]} -gt 0 ]; then
   echo "Missing required environment variable(s): ${missing[*]}"
   echo
   echo "Usage:"
-  echo "  POSTGRES_PASSWORD=... JWT_SECRET=... OPENAI_API_KEY=... ./deploy.sh"
+  echo "  POSTGRES_PASSWORD=... JWT_SECRET=... LOGOS_API_KEY=... ./deploy.sh"
   exit 1
 fi
 
@@ -41,7 +41,7 @@ helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
   --create-namespace \
   --set-string secrets.postgresPassword="$POSTGRES_PASSWORD" \
   --set-string secrets.jwtSecret="$JWT_SECRET" \
-  --set-string secrets.openaiApiKey="$OPENAI_API_KEY" \
+  --set-string secrets.logosApiKey="$LOGOS_API_KEY" \
   --wait --timeout 5m
 
 echo

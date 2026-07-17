@@ -72,6 +72,16 @@ Current responsibilities:
 - share trips through generated links
 - communicate with backend services through the API Gateway
 
+Key implementation details:
+
+- Destination field uses city autocomplete powered by OpenStreetMap Nominatim
+- Trip duration is entered as start/end dates; day count is derived automatically
+- Itinerary view groups activities by period (morning / afternoon / evening) with drag-and-drop reordering and removal
+- My Plans page has two tabs: "My Plans" and "Shared with me"
+- Shared trip links show a banner to non-owners; logged-out visitors see a "Log in to save" prompt
+- Anonymous users can generate and view itineraries; login is only required to save or share
+- Registration validates password match in real time; duplicate email/username returns HTTP 409
+
 The frontend does not currently collect budget information.
 
 ### 3.2 NGINX API Gateway
