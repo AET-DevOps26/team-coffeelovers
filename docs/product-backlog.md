@@ -72,28 +72,28 @@ As a visitor, I want to enter my travel destination so that the application know
 
 ##### Tasks
 
-- [ ] Create destination input field
-- [ ] Add validation for empty destination
-- [ ] Store destination in trip request object
+- [x] Create destination input field
+- [x] Add validation for empty destination
+- [x] Store destination in trip request object
 
 ---
 
-#### User Story 1.2: Enter number of travel days
+#### User Story 1.2: Enter travel dates
 
-As a visitor, I want to enter the number of travel days so that the application can generate a plan for the correct trip duration.
+As a visitor, I want to enter my travel start and end dates so that the application can generate a plan for the correct trip duration.
 
 ##### Acceptance Criteria
 
-- The user can enter the number of days.
-- The number of days is required.
-- The value must be a positive number.
-- The number of days is included in the trip request.
+- The user can pick a start date and an end date.
+- Both dates are required.
+- The trip duration in days is derived automatically from the date range.
+- The duration is included in the trip request.
 
 ##### Tasks
 
-- [ ] Create number of days input field
-- [ ] Add validation for invalid day values
-- [ ] Store trip duration in trip request object
+- [x] Create start date and end date input fields
+- [x] Add validation for missing or invalid dates
+- [x] Derive trip duration from date range and store in trip request object
 
 ---
 
@@ -110,10 +110,10 @@ As a visitor, I want to select my travel preference so that the generated plan m
 
 ##### Tasks
 
-- [ ] Create travel preference selection component
-- [ ] Add predefined travel preference options
-- [ ] Add default preference handling
-- [ ] Store selected preference in trip request object
+- [x] Create travel preference selection component
+- [x] Add predefined travel preference options
+- [x] Add default preference handling
+- [x] Store selected preference in trip request object
 
 #### User Story 1.4: Generate travel plan
 
@@ -129,11 +129,11 @@ As a visitor, I want to generate a travel plan from my trip details so that I ca
 
 ##### Tasks
 
-- [ ] Create GenAI service interface
-- [ ] Build prompt template for itinerary generation
-- [ ] Send trip request to GenAI service
-- [ ] Parse AI response
-- [ ] Display generated itinerary on the frontend
+- [x] Create GenAI service interface
+- [x] Build prompt template for itinerary generation
+- [x] Send trip request to GenAI service
+- [x] Parse AI response
+- [x] Display generated itinerary on the frontend
 
 ---
 
@@ -163,10 +163,10 @@ As a visitor, I want to view my generated itinerary so that I can understand the
 
 ##### Tasks
 
-- [ ] Create itinerary view component
-- [ ] Create itinerary day component
-- [ ] Create activity card component
-- [ ] Display activities by day and time block
+- [x] Create itinerary view component
+- [x] Create itinerary day component
+- [x] Create activity card component
+- [x] Display activities by day and time block
 
 #### User Story 2.2: View activity details
 
@@ -200,8 +200,8 @@ As a visitor, I want to see recommended places on a map so that I can understand
 
 ##### Tasks
 
-- [ ] Choose map provider or library
-- [ ] Add map component
+- [x] Choose map provider or library
+- [x] Add map component
 - [ ] Convert activity locations into map markers
 - [ ] Display markers on the map
 - [ ] Add marker click behavior
@@ -238,9 +238,9 @@ As a visitor, I want to reorder activities so that I can customize the travel pl
 
 ##### Tasks
 
-- [ ] Add drag-and-drop support
-- [ ] Update itinerary state after reordering
-- [ ] Support moving activities between days
+- [x] Add drag-and-drop support
+- [x] Update itinerary state after reordering
+- [x] Support moving activities between days
 - [ ] Sync map markers with updated itinerary
 
 #### User Story 2.6: Remove activity from plan
@@ -256,14 +256,16 @@ As a visitor, I want to remove an activity from my travel plan so that I can exc
 
 ##### Tasks
 
-- [ ] Add remove button to activity cards
-- [ ] Update itinerary state after removal
+- [x] Add remove button to activity cards
+- [x] Update itinerary state after removal
 - [ ] Update map markers after removal
 - [ ] Add confirmation or undo option if needed
 
 #### User Story 2.7: Swap activity with alternative
 
 As a visitor, I want to replace an activity with an AI-suggested alternative so that I can improve my itinerary.
+
+> **Status:** Not implemented. The UI button was removed pending backend `/suggest` endpoint implementation in the GenAI and Trip services.
 
 ##### Acceptance Criteria
 
@@ -307,11 +309,11 @@ As a visitor, I want to create an account so that I can save and manage my trave
 
 ##### Tasks
 
-- [ ] Create registration page
-- [ ] Add registration form validation
-- [ ] Implement backend registration endpoint
-- [ ] Store user data securely
-- [ ] Display registration success or error messages
+- [x] Create registration page
+- [x] Add registration form validation (real-time password match, min 6 chars, duplicate email/username returns 409)
+- [x] Implement backend registration endpoint
+- [x] Store user data securely
+- [x] Display registration success or error messages
 
 #### User Story 3.2: Login
 
@@ -326,11 +328,11 @@ As a user, I want to log in so that I can access my saved travel plans and favor
 
 ##### Tasks
 
-- [ ] Create login page
-- [ ] Add login form validation
-- [ ] Implement backend login endpoint
-- [ ] Manage authentication state
-- [ ] Add logout functionality
+- [x] Create login page
+- [x] Add login form validation
+- [x] Implement backend login endpoint
+- [x] Manage authentication state
+- [x] Add logout functionality
 
 #### User Story 3.3: Save travel plan
 
@@ -345,10 +347,10 @@ As a user, I want to save my generated travel plan so that I can access it later
 
 ##### Tasks
 
-- [ ] Create travel plan persistence model
-- [ ] Implement save travel plan endpoint
-- [ ] Connect save button to backend
-- [ ] Display save success or error message
+- [x] Create travel plan persistence model
+- [x] Implement save travel plan endpoint
+- [x] Connect save button to backend
+- [x] Display save success or error message
 
 #### User Story 3.4: Add travel plan to favorites
 
@@ -381,10 +383,10 @@ As a user, I want to share my travel plan so that other people can view it.
 
 ##### Tasks
 
-- [ ] Create share button
-- [ ] Generate shareable plan link
-- [ ] Create shared plan view
-- [ ] Add access handling for shared plans
+- [x] Create share button (disabled until plan is saved, with tooltip)
+- [x] Generate shareable plan link (URL with tripId param, itinerary cached in DB)
+- [x] Create shared plan view (banner showing author username, Save to My Plans CTA)
+- [x] Add access handling for shared plans (non-owners see banner only, no delete/save/share buttons)
 
 #### User Story 3.6: Export travel plan
 
@@ -433,11 +435,11 @@ As a visitor, I want to use a clear travel planner page so that I can easily gen
 
 ##### Tasks
 
-- [ ] Create main travel planner page
-- [ ] Add trip input form
-- [ ] Add generate button
-- [ ] Add itinerary result section
-- [ ] Add map section
+- [x] Create main travel planner page
+- [x] Add trip input form
+- [x] Add generate button
+- [x] Add itinerary result section
+- [x] Add map section
 
 #### User Story 4.2: Add responsive design
 
@@ -470,11 +472,11 @@ As a frontend developer, I want a backend endpoint for trip generation so that t
 
 ##### Tasks
 
-- [ ] Define trip request DTO/model
-- [ ] Define travel plan response DTO/model
-- [ ] Create trip generation endpoint
-- [ ] Connect endpoint to GenAI service
-- [ ] Add request validation
+- [x] Define trip request DTO/model
+- [x] Define travel plan response DTO/model
+- [x] Create trip generation endpoint
+- [x] Connect endpoint to GenAI service
+- [x] Add request validation
 
 #### User Story 4.4: Define domain model
 
@@ -489,13 +491,31 @@ As a developer, I want to define the main domain objects so that the application
 
 ##### Tasks
 
-- [ ] Define User model
-- [ ] Define TripRequest model
-- [ ] Define TravelPlan model
-- [ ] Define ItineraryDay model
-- [ ] Define Activity model
+- [x] Define User model
+- [x] Define TripRequest model
+- [x] Define TravelPlan model
+- [x] Define ItineraryDay model
+- [x] Define Activity model
 - [ ] Add location fields to Activity model
-- [ ] Document model relationships
+- [x] Document model relationships
+
+#### User Story 4.4b: Add OpenAPI/Swagger documentation to Spring Boot services
+
+As a developer, I want OpenAPI/Swagger UI exposed on the backend services so that the API is self-documented and testable.
+
+##### Acceptance Criteria
+
+- Auth Service and Trip Service expose Swagger UI.
+- The GenAI service Swagger UI is already available at `/docs` (FastAPI auto-generates it).
+- All endpoints are visible and documented in the UI.
+
+##### Tasks
+
+- [ ] Add `springdoc-openapi-starter-webmvc-ui` dependency to auth-service
+- [ ] Add `springdoc-openapi-starter-webmvc-ui` dependency to trip-service
+- [ ] Verify Swagger UI is accessible at `/swagger-ui.html` on each service
+
+---
 
 #### User Story 4.5: Create contribution guide
 

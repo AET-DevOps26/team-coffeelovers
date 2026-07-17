@@ -37,9 +37,9 @@ AI Travel Planner solves these problems by generating a personalized travel plan
 The AI Travel Planner generates a personalized travel itinerary based on three core inputs:
 
 **User Input:**
-1. **Destination** - Where the user wants to travel
-2. **Number of travel days** - Duration of the trip
-3. **Travel preference** - Style of travel (e.g., popular attractions, historical, outdoor, food & culture, mixed)
+1. **Destination** - Where the user wants to travel (with city autocomplete powered by OpenStreetMap Nominatim)
+2. **Travel dates** - Start and end date; the number of itinerary days is derived automatically
+3. **Travel preference** - Style of travel (popular attractions, historical, outdoor, food & culture, mixed)
 
 **Generated Output:**
 The system creates a structured day-by-day travel plan that includes:
@@ -57,8 +57,10 @@ The application considers attractions' physical locations to create efficient ro
 **Interactive Plan Customization:**
 Users can edit and personalize their generated itineraries:
 - **Reorder activities** - Drag-and-drop activities to change their sequence within a day or move them to different days
-- **Remove or swap activities** - Delete activities that don't interest them or replace them with AI-suggested alternatives
-- **View activity details** - Click on any activity or map marker to see full details (address, opening hours, description)
+- **Remove activities** - Delete activities that don't interest them
+
+**Save and Share:**
+Registered users can save a generated plan to their account, retrieve it later from the My Plans page, and share it with others via a link. Shared plans can be saved by the recipient to their own account.
 
 ## 4. Intended Users
 
@@ -141,9 +143,11 @@ A balanced itinerary combining attractions, neighborhoods, food areas, and outdo
 The first version focuses on core features with interactive customization. Future versions will enhance the social and personalization aspects.
 
 **Planned enhancements for future versions:**
-- **Sharing & collaboration** - Share itineraries with others by entering email/username; recipients can view, like, and comment on shared plans
-- **User accounts** - Create accounts to save, organize, and manage multiple itineraries
-- **Advanced collaboration features** - Collaborative editing, reviews
+- **Activity swap** - Replace an activity with an AI-suggested alternative (backend `/suggest` endpoint not yet implemented)
+- **Activity details modal** - Click an activity to view full details (address, opening hours, estimated duration)
+- **Favorites** - Mark plans as favorites for quick access
+- **Export** - Download or print a travel plan
+- **Advanced collaboration** - Collaborative editing, comments, social features
 - **Weather-based planning** - Adapt suggestions based on weather conditions and seasons
 - **Advanced personalization** - Budget levels, food preferences, transportation options, trip pace, accessibility needs
 - **Route optimization** - Real-time traffic and transportation time estimates
@@ -152,13 +156,15 @@ The first version focuses on core features with interactive customization. Futur
 
 The initial release will focus on core functionality and interactive customization:
 
-- **Destination input** - Users enter their desired travel destination
-- **Trip duration** - Users specify number of travel days
+- **Destination input** - Users enter their desired travel destination with city autocomplete (OpenStreetMap Nominatim)
+- **Travel dates** - Users pick a start and end date; trip duration in days is calculated automatically
 - **Preference selection** - Users choose travel style
 - **AI itinerary generation** - System processes inputs and generates day-by-day plan
 - **Location-aware organization** - AI groups nearby attractions to optimize routing
 - **Interactive map visualization** - Map displays all recommended places
 - **Structured presentation** - Plan shown with morning/afternoon/evening activities
 - **Drag-and-drop reordering** - Users can drag activities to change their order within or between days
-- **Activity customization** - Users can remove activities from the plan or request AI-suggested alternatives to swap in
-- **Activity details modal** - Click any activity or map marker to view full details (address, hours, estimated duration, description)
+- **Activity removal** - Users can remove activities from the plan
+- **User accounts** - Register, log in, and manage a personal account
+- **Save and share plans** - Save a generated plan to the account, retrieve it from My Plans, and share it with others via a link
+- **Observability** - Prometheus metrics and Grafana dashboards for monitoring request counts, latency, and error rates

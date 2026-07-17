@@ -17,15 +17,19 @@ Each service will own its own schema in a shared PostgreSQL database. Inter-serv
 
 ### Client — React Frontend
 
-The client will be a **React 19** single-page application built with React Router DOM v7. It is planned to provide:
+The client is a **React 19** single-page application built with React Router DOM v7. It provides:
 
-- A trip input form (destination, number of days, travel preference)
-- An itinerary view with day-by-day activity cards
-- Drag-and-drop editing (reorder, remove, swap activities)
-- An interactive map showing activity locations as markers
-- User account pages (register, login, saved plans, favourites)
+- A trip input form: destination with city autocomplete (Nominatim), start/end date picker, travel preference selector
+- An itinerary view with day-by-day activity cards grouped by period (morning / afternoon / evening)
+- Drag-and-drop activity reordering and removal
+- An interactive map (Leaflet / OpenStreetMap) centred on the destination
+- User account pages: register, login, My Plans page with two tabs ("My Plans" and "Shared with me")
+- Share plan flow: copy a shareable link, view another user's plan with a save-to-my-plans banner, shared plans listed in the "Shared with me" tab
+- AI-generated itineraries are cached in the database so the same link always returns the same plan
+- Anonymous (unauthenticated) users can generate and view itineraries; login is only required to save or share a plan
+- Registration validates password match in real time and returns specific errors for duplicate email/username (HTTP 409)
 
-The client will communicate with the Spring Boot backend exclusively through the REST API.
+The client communicates with the backend through the REST API. The Auth Service is called directly; the Trip Service and GenAI Service are called through the nginx API Gateway.
 
 ### GenAI Service — Python / LangChain Microservice
 

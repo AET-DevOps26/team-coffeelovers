@@ -81,7 +81,9 @@ Email: testuser@example.com
 Password: Password123!
 ```
 
-If the email already exists, use a different email address or reset the local database volume.
+The form validates password confirmation in real time. If the email or username is already registered, the backend returns HTTP 409 and the form displays "An account with this email or username already exists."
+
+If you need to reset all users and trips, run `docker compose down -v` to wipe the database volume.
 
 ### 4.2 Login
 
@@ -105,24 +107,39 @@ Example trip input:
 
 ```txt
 Destination: Maastricht
-Days: 2
-Preferences: old town, food
-Budget: 250 EUR
+Start date: tomorrow
+End date: day after tomorrow
+Travel preference: Food & Culture
 ```
 
-Submit the form to generate and save the trip.
+Submit the form. The frontend calls the Trip Service through the API Gateway, which calls the GenAI service to generate a day-by-day itinerary. The generated itinerary is cached in the database so returning to the same trip link always shows the same plan.
 
-The frontend should send requests to the backend through the local API Gateway. The backend services then coordinate with the GenAI service and persist trip-related data.
+On the itinerary page, click **Save Plan** to persist the trip to your account. Once saved, the **Share Plan** button becomes active.
+
+### 4.4 Share a Trip
+
+1. On a saved itinerary, click **Share Plan**.
+2. Click **Copy Link** to copy the shareable URL to clipboard.
+3. Open the link in a different browser or incognito window (logged in as a different user or logged out).
+
+When a logged-in user who does not own the trip opens the link, a banner appears at the top:
+> "Shared by \<username\> — save it to your plans?"
+
+Clicking **Save to My Plans** saves the trip to the viewer's account. It then appears in the **Shared with me** tab on the My Plans page, showing the original author's username.
+
+Non-owners do not see the Save Plan, Share Plan, or Delete Plan buttons.
 
 ## 5. Useful Local URLs
 
-| URL                          | Purpose                                                           |
-| ---------------------------- | ----------------------------------------------------------------- |
-| `http://localhost:3000`      | Frontend application                                              |
-| `http://localhost:8001/docs` | GenAI Swagger UI                                                  |
-| `http://localhost:8080`      | API Gateway root                                |
-| `http://localhost:8081`      | Auth service direct port               |
-| `http://localhost:8082`      | Trip service direct port
+| URL                          | Purpose                        |
+| ---------------------------- | ------------------------------ |
+| `http://localhost:3000`      | Frontend application           |
+| `http://localhost:8080`      | API Gateway (nginx)            |
+| `http://localhost:8081`      | Auth service direct port       |
+| `http://localhost:8082`      | Trip service direct port       |
+| `http://localhost:8001/docs` | GenAI Swagger UI               |
+| `http://localhost:9090`      | Prometheus                     |
+| `http://localhost:3001`      | Grafana (admin / admin)        |
 
 A `404` or `403` on a backend root URL does not necessarily mean the service is broken. Use the frontend or the documented API endpoints for verification.
 
