@@ -509,6 +509,7 @@ docker compose logs grafana --tail=100
 
 Follow one service continuously:
 
+
 ```bash
 docker compose logs -f gateway
 ```
