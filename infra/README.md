@@ -304,13 +304,118 @@ curl http://localhost:8001/metrics
 
 ### Grafana
 
-Open:
+Grafana is available at:
 
 ```txt
 http://localhost:3001
 ```
 
-Prometheus datasource provisioning:
+Administrator credentials are configured in `infra/.env`:
+
+```properties
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=replace-with-a-local-password
+```
+
+Prometheus is provisioned automatically as Grafana's default datasource.
+
+Datasource configuration:
+
+```txt
+monitoring/grafana/provisioning/datasources/prometheus.yml
+```
+
+Datasource URL:
+
+```txt
+http://prometheus:9090
+```
+
+The datasource must use the Docker service name `prometheus`. Do not use `localhost`, because `localhost` inside the Grafana container refers to Grafana itself.
+
+### Monitoring Dashboard
+
+Grafana provisions the application dashboard automatically from:
+
+```txt
+monitoring/grafana/dashboards/application-monitoring.json
+```
+
+Dashboard provisioning configuration:
+
+```txt
+monitoring/grafana/provisioning/dashboards/dashboards.yml
+```
+
+Open the dashboard from:
+
+```txt
+Dashboards
+→ AI Travel Planner
+→ AI Travel Planner Monitoring
+```
+
+The dashboard shows:
+
+* service availability
+* HTTP request rate
+* HTTP error rate
+* average HTTP request latency
+
+### Verify Grafana
+
+Open Grafana:
+
+```txt
+http://localhost:3001
+```
+
+Sign in using the credentials from `infra/.env`.
+
+Open **Explore**, select the `Prometheus` datasource, and run:
+
+```promql
+up
+```
+
+Expected results:
+
+```txt
+up{job="prometheus"} 1
+up{job="auth-service"} 1
+up{job="trip-service"} 1
+up{job="genai"} 1
+```
+
+A value of `1` means the target is available. A value of `0` means Prometheus cannot currently scrape the target.
+
+Check the Grafana container:
+
+```bash
+docker compose ps grafana
+```
+
+Check Grafana logs:
+
+```bash
+docker compose logs grafana --tail=100
+```
+
+Restart Grafana after provisioning changes:
+
+```bash
+docker compose --env-file .env up -d --force-recreate grafana
+```
+
+### Grafana Cannot Connect to Prometheus
+
+Check that Grafana and Prometheus are running:
+
+```bash
+docker compose ps grafana prometheus
+```
+
+Check the datasource configuration:
 
 ```txt
 monitoring/grafana/provisioning/datasources/prometheus.yml
@@ -322,27 +427,17 @@ The datasource URL must be:
 http://prometheus:9090
 ```
 
-To verify the integration:
+Check Grafana logs:
 
-1. Open Grafana.
-2. Go to **Explore**.
-3. Select **Prometheus**.
-4. Run:
-
-```promql
-up
+```bash
+docker compose logs grafana --tail=100
 ```
 
-Expected result:
+Restart Grafana:
 
-```txt
-up{job="prometheus"} 1
-up{job="auth-service"} 1
-up{job="trip-service"} 1
-up{job="genai"} 1
+```bash
+docker compose restart grafana
 ```
-
-`1` means the target is available. `0` means the target cannot currently be scraped.
 
 ## Logs
 
@@ -360,6 +455,7 @@ docker compose logs grafana --tail=100
 ```
 
 Follow logs continuously:
+
 
 ```bash
 docker compose logs -f gateway
@@ -464,5 +560,7 @@ docker compose down -v
 docker compose build --no-cache
 docker compose --env-file .env up
 ```
+
+
 
 This removes local volumes, rebuilds images, and starts the stack from a clean state.
