@@ -138,11 +138,16 @@ function RegisterPage() {
                 }
               </button>
             </div>
+            {confirmPassword.length > 0 && (
+              <p style={{ ...requirementStyle, color: password === confirmPassword ? "#16a34a" : "#dc2626" }}>
+                {password === confirmPassword ? "✓ Passwords match" : "✗ Passwords do not match"}
+              </p>
+            )}
           </div>
 
           {error && <p style={errorStyle}>{error}</p>}
 
-          <button type="submit" disabled={loading} style={btnStyle}>
+          <button type="submit" disabled={loading || (confirmPassword.length > 0 && password !== confirmPassword)} style={btnStyle}>
             {loading ? "Creating account..." : "Create Account"}
           </button>
         </form>

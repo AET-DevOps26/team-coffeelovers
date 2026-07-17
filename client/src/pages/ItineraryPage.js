@@ -159,6 +159,7 @@ export default function ItineraryPage() {
     setTimeout(() => setToast(null), 2500);
   };
 
+
   const handleRemoveActivity = (dayIndex, activityId) => {
     setItinerary(prev => ({
       ...prev,
@@ -340,24 +341,24 @@ export default function ItineraryPage() {
         </div>
 
         {!(tripIdParam && currentUserId && tripOwnerId && currentUserId !== tripOwnerId) && (
-        <div style={{ position: "absolute", top: 24, right: 24, display: "flex", gap: 10 }}>
-          {activeTripId
-            ? <button onClick={handleDelete} style={{ ...headerBtnStyle, background: "#b91c1c", border: "1px solid #b91c1c", color: "white" }}>Delete Plan</button>
-            : <button onClick={handleSave} style={headerBtnStyle}>Save Plan</button>
-          }
-          <button
-            onClick={() => activeTripId && setShareOpen(true)}
-            disabled={!activeTripId}
-            title={activeTripId ? undefined : "To share the trip you need to save it first"}
-            style={{
-              ...headerBtnStyle,
-              background: "white", border: "1px solid white",
-              color: activeTripId ? "#1e293b" : "rgba(30,41,59,0.35)",
-              opacity: activeTripId ? 1 : 0.55,
-              cursor: activeTripId ? "pointer" : "not-allowed",
-            }}
-          >Share Plan</button>
-        </div>
+          <div style={{ position: "absolute", top: 24, right: 24, display: "flex", gap: 10 }}>
+            {activeTripId
+              ? <button onClick={handleDelete} style={{ ...headerBtnStyle, background: "#b91c1c", border: "1px solid #b91c1c", color: "white" }}>Delete Plan</button>
+              : <button onClick={handleSave} style={headerBtnStyle}>Save Plan</button>
+            }
+            <button
+              onClick={() => activeTripId && setShareOpen(true)}
+              disabled={!activeTripId}
+              title={activeTripId ? undefined : "To share the trip you need to save it first"}
+              style={{
+                ...headerBtnStyle,
+                background: "white", border: "1px solid white",
+                color: activeTripId ? "#1e293b" : "rgba(30,41,59,0.35)",
+                opacity: activeTripId ? 1 : 0.55,
+                cursor: activeTripId ? "pointer" : "not-allowed",
+              }}
+            >Share Plan</button>
+          </div>
         )}
       </div>
       </div>

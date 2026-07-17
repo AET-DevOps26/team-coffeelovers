@@ -2,169 +2,185 @@
 
 ## 1. Overview
 
-AI Travel Planner is a web application that helps users create a personalized travel itinerary with the support of Generative AI.
+AI Travel Planner is a web application that helps users create personalized travel itineraries with the support of Generative AI.
 
-In the first version, users can enter a destination, the number of travel days, and optionally their travel preferences. Based on this information, the application generates a structured day-by-day travel plan.
+Users provide:
 
-The goal of the application is to make travel planning faster, easier, more personalized and practical.
+- a destination
+- a start date
+- an end date
+- a preferred travel experience
 
-## 2. Problem & Solution
+Based on this information, the application generates a structured travel itinerary.
 
-**The Problem:**
-Planning a trip is difficult and time-consuming. Users must search across many websites, compare attractions, check opening times, understand distances, and organize activities across multiple days. This becomes even harder with specific preferences—some want popular spots, others prefer historical sites, outdoor activities, or local experiences.
+The goal is to make travel planning faster, easier, and more personalized.
 
-Common user challenges:
-- Excessive time spent researching
-- Uncertainty about which places are worth visiting
-- Unrealistic daily schedules
-- Missing attractions matching their interests
-- Poor organization and logical route planning
-- Not considering weather, distance, or travel time between locations
+## 2. Problem
 
-**The Solution:**
-AI Travel Planner solves these problems by generating a personalized travel plan based on destination, travel duration, and preferences.
+Planning a trip often requires searching across multiple websites, comparing attractions, selecting suitable activities, and organizing them across several days.
 
-**Key Benefits:**
-- **Faster planning** - Generate complete itineraries in minutes
-- **Personalized recommendations** - Tailored to user preferences and interests
-- **Logical organization** - AI-optimized day-by-day structure with location-aware routing
-- **Realistic schedules** - Avoids overloading days and considers travel distances
-- **Visual planning** - See recommended places on interactive maps
-- **Quick decision-making** - Users get a structured plan they can follow, modify, or use as a starting point
+This process can be difficult for users who:
 
-## 3. Main Functionality
+- are visiting a destination for the first time
+- have limited time to research
+- are unsure which attractions match their interests
+- want a clear itinerary instead of a list of disconnected recommendations
+- need a simple way to save and share their travel plan
 
-The AI Travel Planner generates a personalized travel itinerary based on three core inputs:
+Users may spend significant time researching without knowing whether the final plan is balanced or suitable for their travel preferences.
 
-**User Input:**
-1. **Destination** - Where the user wants to travel (with city autocomplete powered by OpenStreetMap Nominatim)
-2. **Travel dates** - Start and end date; the number of itinerary days is derived automatically
-3. **Travel preference** - Style of travel (popular attractions, historical, outdoor, food & culture, mixed)
+## 3. Proposed Solution
 
-**Generated Output:**
-The system creates a structured day-by-day travel plan that includes:
-- Morning, afternoon, and evening activity suggestions
-- Places matching the selected travel style
-- Short explanations for each recommendation
-- Realistic activity count per day
-- Logical location ordering and routes
-- Food/break suggestions for balanced scheduling
-- Interactive map visualization showing all recommended places and their locations
+AI Travel Planner simplifies this process by generating a personalized itinerary from a small set of inputs.
 
-**Location-Aware Planning:**
-The application considers attractions' physical locations to create efficient routes—grouping nearby places on the same day to minimize unnecessary travel time and create a logical, easy-to-follow itinerary.
+The user selects:
 
-**Interactive Plan Customization:**
-Users can edit and personalize their generated itineraries:
-- **Reorder activities** - Drag-and-drop activities to change their sequence within a day or move them to different days
-- **Remove activities** - Delete activities that don't interest them
+1. a travel destination
+2. the start and end dates
+3. a preferred travel experience
 
-**Save and Share:**
-Registered users can save a generated plan to their account, retrieve it later from the My Plans page, and share it with others via a link. Shared plans can be saved by the recipient to their own account.
+The application then generates a structured itinerary containing activity suggestions for the selected destination and travel period.
 
-## 4. Intended Users
+Registered users can save generated trips and share them through a link.
 
-The application is intended for people who want to plan trips quickly and easily:
+## 4. Current User Input
 
-- Students planning short trips
-- Tourists visiting a city for the first time
-- Travelers wanting a quick itinerary draft
-- People without time to research manually
-- Users wanting recommendations based on interests
-- Groups of friends planning together
-- Beginner travelers needing guidance
-- Users wanting to compare different travel styles
+The current trip planning form collects the following information.
 
-## 5. How GenAI Powers the Application
+### Destination
 
-Generative AI is the core of AI Travel Planner. It transforms basic user input into a personalized, location-optimized travel plan.
+The city or destination the user wants to visit.
 
-**AI-Driven Process:**
-1. User provides destination, travel days, and preferences
-2. System creates a detailed prompt for the AI model
-3. AI generates a structured day-by-day itinerary
-4. System integrates location data to optimize routes and groupings
-5. Plan is displayed with map visualization
+### Travel Dates
 
-**Location-Aware Intelligence:**
-The AI considers physical locations of attractions to:
-- Group nearby attractions on the same day
-- Create logical, efficient travel routes
-- Minimize unnecessary travel between locations
-- Suggest complementary activities in proximity
-- Ensure realistic scheduling without backtracking
+The user selects:
 
-The AI-generated plan is enhanced with map and location data, creating practical itineraries instead of just listing interesting places.
+- a start date
+- an end date
 
-## 6. Usage Scenarios
+These dates define the duration of the trip.
 
-### Scenario 1: Popular Attractions Trip
+### Travel Experience
 
-**Input:**
-- Destination: Paris
-- Number of days: 3
-- Travel type: Popular attractions
+The user selects the type of experience they are looking for.
 
-**Output:**
-A 3-day itinerary featuring the Eiffel Tower, Louvre Museum, Montmartre, and the Notre-Dame area. Nearby attractions are grouped by day and shown on the map.
+Current options include:
 
-### Scenario 2: Historical Trip
+- Popular Attractions
+- Historical
+- Outdoor Activities
+- Food & Culture
+- Mixed Trip
 
-**Input:**
-- Destination: Rome
-- Number of days: 4
-- Travel type: Historical trip
+The selected experience is used to personalize the generated itinerary.
 
-**Output:**
-A plan focused on ancient ruins, historical landmarks, museums, and cultural sites with optimized routing between locations.
+## 5. Generated Result
 
-### Scenario 3: Outdoor Activities
+The application produces a structured travel plan containing:
 
-**Input:**
-- Destination: Munich
-- Number of days: 2
-- Travel type: Outdoor activities
+- a summary of the trip
+- a day-by-day itinerary
+- suggested activities
+- descriptions of recommended places
+- recommendations aligned with the selected travel experience
 
-**Output:**
-A plan with parks, walking areas, viewpoints, and nature activities, displayed on the map for easier route understanding.
+The generated plan is intended to provide a useful starting point for the user's trip.
 
-### Scenario 4: Mixed Trip
+## 6. Current Features
 
-**Input:**
-- Destination: Barcelona
-- Number of days: 3
-- Travel type: Mixed trip
+The current application supports:
 
-**Output:**
-A balanced itinerary combining attractions, neighborhoods, food areas, and outdoor spots with clear map organization.
+- destination input
+- start and end date selection
+- travel experience selection
+- AI-generated travel itineraries
+- user registration
+- user login
+- saving trips
+- sharing trips through a generated link
 
-## 7. Future Roadmap
+## 7. Intended Users
 
-The first version focuses on core features with interactive customization. Future versions will enhance the social and personalization aspects.
+AI Travel Planner is intended for:
 
-**Planned enhancements for future versions:**
-- **Activity swap** - Replace an activity with an AI-suggested alternative (backend `/suggest` endpoint not yet implemented)
-- **Activity details modal** - Click an activity to view full details (address, opening hours, estimated duration)
-- **Favorites** - Mark plans as favorites for quick access
-- **Export** - Download or print a travel plan
-- **Advanced collaboration** - Collaborative editing, comments, social features
-- **Weather-based planning** - Adapt suggestions based on weather conditions and seasons
-- **Advanced personalization** - Budget levels, food preferences, transportation options, trip pace, accessibility needs
-- **Route optimization** - Real-time traffic and transportation time estimates
+- tourists visiting a destination for the first time
+- students planning short trips
+- travelers with limited time for research
+- users looking for recommendations based on their interests
+- groups of friends planning a trip
+- users who want to save or share an itinerary
+- travelers who need a quick first draft of their travel plan
 
-## 8. Initial Features
+## 8. Example Usage Scenarios
 
-The initial release will focus on core functionality and interactive customization:
+### Popular Attractions
 
-- **Destination input** - Users enter their desired travel destination with city autocomplete (OpenStreetMap Nominatim)
-- **Travel dates** - Users pick a start and end date; trip duration in days is calculated automatically
-- **Preference selection** - Users choose travel style
-- **AI itinerary generation** - System processes inputs and generates day-by-day plan
-- **Location-aware organization** - AI groups nearby attractions to optimize routing
-- **Interactive map visualization** - Map displays all recommended places
-- **Structured presentation** - Plan shown with morning/afternoon/evening activities
-- **Drag-and-drop reordering** - Users can drag activities to change their order within or between days
-- **Activity removal** - Users can remove activities from the plan
-- **User accounts** - Register, log in, and manage a personal account
-- **Save and share plans** - Save a generated plan to the account, retrieve it from My Plans, and share it with others via a link
-- **Observability** - Prometheus metrics and Grafana dashboards for monitoring request counts, latency, and error rates
+A user selects Paris, chooses travel dates, and selects **Popular Attractions**.
+
+The application generates an itinerary containing well-known attractions and activities organized across the selected days.
+
+### Historical Trip
+
+A user selects Rome and chooses **Historical**.
+
+The generated itinerary focuses on historical landmarks, museums, and cultural sites.
+
+### Outdoor Activities
+
+A user selects Munich and chooses **Outdoor Activities**.
+
+The application recommends parks, walking areas, viewpoints, and outdoor experiences.
+
+### Food and Culture
+
+A user selects Barcelona and chooses **Food & Culture**.
+
+The resulting itinerary includes cultural attractions, neighborhoods, markets, and food-related experiences.
+
+### Mixed Trip
+
+A user selects a destination and chooses **Mixed Trip**.
+
+The application generates a balanced itinerary containing different types of attractions and activities.
+
+## 9. Current Limitations
+
+The current version does not yet provide complete support for:
+
+- budget input in the frontend
+- budget-aware itinerary generation across the full application
+- interactive map visualization
+- verified route optimization
+- real-time travel duration
+- weather-aware planning
+- real-time opening hours
+- drag-and-drop itinerary editing
+- activity replacement
+- favourites
+
+The GenAI service supports optional budget information at the API level, but this capability is not yet integrated into the complete user workflow.
+
+Generated recommendations may include information that changes over time. Users should verify details such as opening hours, ticket prices, transportation availability, and temporary closures.
+
+## 10. Future Improvements
+
+Possible future improvements include:
+
+- frontend budget input
+- end-to-end budget-aware planning
+- interactive maps
+- route and travel-time optimization
+- activity reordering and replacement
+- favourite trips
+- weather-based recommendations
+- richer activity details
+- collaborative trip planning
+- itinerary export
+
+## 11. Product Scope
+
+AI Travel Planner is a travel planning assistant.
+
+It provides itinerary recommendations but does not replace official travel, transportation, weather, or safety information.
+
+Users remain responsible for verifying time-sensitive details before following a generated itinerary.

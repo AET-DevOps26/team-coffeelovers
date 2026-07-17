@@ -1,8 +1,8 @@
 # How to Launch the Project Locally
 
-This guide explains how to start the AI Travel Planner locally and test the main user workflow through the frontend.
+This guide explains how to start the AI Travel Planner locally and verify the main user workflow through the frontend.
 
-For detailed infrastructure, gateway routing, database checks, service logs, and troubleshooting, see:
+For detailed infrastructure configuration, API Gateway routing, monitoring, service logs, database checks, and troubleshooting, see:
 
 ```txt
 infra/README.md
@@ -12,17 +12,18 @@ infra/README.md
 
 Install:
 
-* Docker
-* Docker Compose plugin
+- Git
+- Docker
+- Docker Compose plugin
 
-Recommended terminal for command examples:
+Recommended terminals:
 
-* Git Bash
-* WSL
-* Linux terminal
-* macOS terminal
+- Git Bash
+- WSL
+- Linux terminal
+- macOS terminal
 
-The `curl` examples in this project use Unix-style command syntax. On Windows, Git Bash or WSL is recommended.
+The commands in this guide use Bash syntax.
 
 ## 1. Clone the Repository
 
@@ -31,64 +32,109 @@ git clone https://github.com/AET-DevOps26/team-coffeelovers.git
 cd team-coffeelovers
 ```
 
-## 2. Start the Application
+## 2. Configure the Environment
+
+Create the Docker Compose environment file:
+
+```txt
+infra/.env
+```
+
+For local development, configure the GenAI service to use the deterministic mock provider:
+
+```properties
+GENAI_PROVIDER=mock
+GENAI_LOG_LEVEL=INFO
+```
+
+Configure the required application, database, authentication, and Grafana values described in:
+
+```txt
+infra/README.md
+```
+
+Do not commit:
+
+- `infra/.env`
+- API keys
+- passwords
+- JWT secrets
+- access tokens
+- private credentials
+
+## 3. Validate the Configuration
 
 From the repository root:
 
 ```bash
-cd infra
-docker compose up --build
+docker compose \
+  --env-file infra/.env \
+  -f infra/docker-compose.yml \
+  config
 ```
 
-Or from the repository root without changing directories:
+The command should finish without configuration errors.
+
+## 4. Start the Application
+
+From the repository root:
 
 ```bash
-docker compose -f infra/docker-compose.yml up --build
+docker compose \
+  --env-file infra/.env \
+  -f infra/docker-compose.yml \
+  up --build
 ```
 
-This builds and starts the local application stack.
+To run the application in the background:
 
-## 3. Open the Frontend
+```bash
+docker compose \
+  --env-file infra/.env \
+  -f infra/docker-compose.yml \
+  up --build -d
+```
 
-Open the frontend in your browser:
+The local stack includes:
+
+```txt
+postgres
+auth-service
+trip-service
+genai
+client
+gateway
+prometheus
+grafana
+```
+
+Check the container status:
+
+```bash
+docker compose \
+  --env-file infra/.env \
+  -f infra/docker-compose.yml \
+  ps
+```
+
+Wait until the required application services are running before opening the frontend.
+
+## 5. Open the Frontend
+
+Open:
 
 ```txt
 http://localhost:3000
 ```
 
-This is the main user-facing application.
+The frontend is the main entrypoint for testing the application workflow.
 
-## 4. Test the Main User Workflow
+## 6. Test the Main User Workflow
 
-Use the frontend to test the application end to end.
+### 6.1 Register
 
-### 4.1 Register a User
-
-1. Open the frontend:
-
-```txt
-http://localhost:3000
-```
-
-2. Go to the registration page.
-3. Create a local test user.
-
-Example test data:
-
-```txt
-Username: testuser
-Email: testuser@example.com
-Password: Password123!
-```
-
-The form validates password confirmation in real time. If the email or username is already registered, the backend returns HTTP 409 and the form displays "An account with this email or username already exists."
-
-If you need to reset all users and trips, run `docker compose down -v` to wipe the database volume.
-
-### 4.2 Login
-
-1. Go to the login page.
-2. Login with the user created in the previous step.
+1. Open the registration page.
+2. Create a local test user.
 
 Example:
 
@@ -97,60 +143,71 @@ Email: testuser@example.com
 Password: Password123!
 ```
 
-After login, the frontend should allow access to the trip planning workflow.
+The form validates password confirmation in real time. If the email or username is already registered, the backend returns HTTP 409 and the form shows "An account with this email or username already exists."
 
-### 4.3 Create and Save a Trip
+To remove all local users and database data, follow the reset instructions in [Reset Local Data](#10-reset-local-data).
 
-Use the trip planning page in the frontend.
+### 6.2 Log In
 
-Example trip input:
+1. Open the login page.
+2. Enter the credentials created during registration.
+3. Submit the login form.
+
+After successful authentication, the trip planning workflow should become available.
+
+### 6.3 Generate an Itinerary
+
+Enter trip information in the frontend.
+
+Example:
 
 ```txt
 Destination: Maastricht
-Start date: tomorrow
-End date: day after tomorrow
-Travel preference: Food & Culture
+Start Date: ---
+End Date: ---
+Preferences: Mixed Trip
 ```
 
-Submit the form. The frontend calls the Trip Service through the API Gateway, which calls the GenAI service to generate a day-by-day itinerary. The generated itinerary is cached in the database so returning to the same trip link always shows the same plan.
+Submit the form.
 
-On the itinerary page, click **Save Plan** to persist the trip to your account. Once saved, the **Share Plan** button becomes active.
+The system should:
 
-### 4.4 Share a Trip
+1. send the request through the NGINX API Gateway
+2. generate a structured itinerary through the GenAI Service
+3. display the day-by-day itinerary in the frontend
+
+The frontend currently does not collect budget information. Optional budget support exists only at the GenAI API level and is not part of the complete user workflow.
+
+### 6.4 Save the Trip
+
+Save the generated itinerary while authenticated.
+
+The Trip Service should persist the trip data in PostgreSQL.
+
+### 6.5 Share the Trip
 
 1. On a saved itinerary, click **Share Plan**.
-2. Click **Copy Link** to copy the shareable URL to clipboard.
-3. Open the link in a different browser or incognito window (logged in as a different user or logged out).
+2. Click **Copy Link** to copy the shareable URL.
+3. Open the link in a different browser or incognito window.
 
-When a logged-in user who does not own the trip opens the link, a banner appears at the top:
-> "Shared by \<username\> — save it to your plans?"
+When a logged-in non-owner opens the link, a banner appears: "Shared by \<username\> — save it to your plans?" with a **Save to My Plans** button. When a logged-out visitor opens the link, the banner shows "This plan was shared with you — log in to save it to your account" with a **Log in to save** button. Saved shared trips appear in the **Shared with me** tab on the My Plans page.
 
-Clicking **Save to My Plans** saves the trip to the viewer's account. It then appears in the **Shared with me** tab on the My Plans page, showing the original author's username.
-
-Non-owners do not see the Save Plan, Share Plan, or Delete Plan buttons.
-
-## 5. Useful Local URLs
-
-| URL                          | Purpose                        |
-| ---------------------------- | ------------------------------ |
-| `http://localhost:3000`      | Frontend application           |
-| `http://localhost:8080`      | API Gateway (nginx)            |
-| `http://localhost:8081`      | Auth service direct port       |
-| `http://localhost:8082`      | Trip service direct port       |
-| `http://localhost:8001/docs` | GenAI Swagger UI               |
-| `http://localhost:9090`      | Prometheus                     |
-| `http://localhost:3001`      | Grafana (admin / admin)        |
-
-A `404` or `403` on a backend root URL does not necessarily mean the service is broken. Use the frontend or the documented API endpoints for verification.
-
-## 6. Quick API Checks
-
-These checks are optional if the frontend workflow works, but they are useful for debugging.
+## 7. Verify the Services
 
 ### GenAI Health
 
 ```bash
 curl http://localhost:8080/genai/health
+```
+
+Expected response:
+
+```json
+{
+  "status": "ok",
+  "service": "genai",
+  "version": "1.0.0"
+}
 ```
 
 ### Trip Service Health
@@ -159,32 +216,108 @@ curl http://localhost:8080/genai/health
 curl http://localhost:8080/api/v1/trips/health
 ```
 
-## 7. Stop the Application
+Expected response:
 
-From the `infra/` directory:
-
-```bash
-docker compose down
+```json
+{
+  "status": "UP",
+  "service": "trip-service"
+}
 ```
 
-To stop the system and remove local database data:
+A `404` or `403` response from a service root URL does not necessarily indicate a failure. Use the documented health and API endpoints for verification.
 
-```bash
-docker compose down -v
-```
+## 8. Verify Monitoring
 
-Use `docker compose down -v` when you want to reset local test users, saved trips, and database state.
+### Prometheus
 
-## More Details
-
-For detailed local infrastructure checks, see:
+Open:
 
 ```txt
-infra/README.md
+http://localhost:9090/targets
 ```
 
-For Kubernetes deployment instructions, see:
+The following targets should report `UP`:
 
 ```txt
-infra/helm/README.md
+prometheus
+auth-service
+trip-service
+genai
 ```
+
+### Grafana
+
+Open:
+
+```txt
+http://localhost:3001
+```
+
+Sign in with the Grafana credentials configured in `infra/.env`.
+
+Open:
+
+```txt
+Dashboards
+→ AI Travel Planner
+→ AI Travel Planner Monitoring
+```
+
+The dashboard should display metrics for the Auth, Trip, and GenAI services.
+
+## 9. Local URLs
+
+| Component | URL | Purpose |
+|---|---|---|
+| Frontend | `http://localhost:3000` | Main user interface |
+| Grafana | `http://localhost:3001` | Monitoring dashboards |
+| GenAI Swagger UI | `http://localhost:8001/docs` | GenAI API documentation |
+| API Gateway | `http://localhost:8080` | Main local API entrypoint |
+| Auth Service | `http://localhost:8081` | Direct development access |
+| Trip Service | `http://localhost:8082` | Direct development access |
+| Prometheus | `http://localhost:9090` | Metrics and target status |
+| PostgreSQL | `localhost:5432` | Local database |
+
+Use the API Gateway for normal application requests. Direct service ports are primarily intended for development and debugging.
+
+## 10. Reset Local Data
+
+Stop the application while preserving local volumes:
+
+```bash
+docker compose \
+  --env-file infra/.env \
+  -f infra/docker-compose.yml \
+  down
+```
+
+Stop the application and remove local volumes:
+
+```bash
+docker compose \
+  --env-file infra/.env \
+  -f infra/docker-compose.yml \
+  down -v
+```
+
+The `-v` option removes local persistent data, including:
+
+- PostgreSQL data
+- registered test users
+- saved trips
+- Prometheus data
+- Grafana data
+
+Use this command only when a complete local reset is intended.
+
+## Related Documentation
+
+| Document | Purpose |
+|---|---|
+| `README.md` | Project overview |
+| `docs/system-overview.md` | Current architecture |
+| `infra/README.md` | Detailed infrastructure, monitoring, logs, and troubleshooting |
+| `genai/README.md` | GenAI providers, endpoints, and development |
+| `infra/helm/README.md` | Kubernetes deployment |
+| `CONTRIBUTING.md` | Development and contribution workflow |
