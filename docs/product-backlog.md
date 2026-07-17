@@ -329,29 +329,34 @@ As a developer, I want a deterministic mock provider so that itinerary generatio
 
 ---
 
-## User Story 3.2: Generate Itineraries with an External LLM
+## User Story 3.2: Generate Itineraries with External LLM Providers
 
 **Status:** `Implemented`
 
-As a user, I want the application to use an external LLM so that I can receive dynamically generated itineraries.
+As a user, I want the application to use an external LLM provider so that I can receive dynamically generated itineraries.
 
 ### Acceptance Criteria
 
 - The provider can be selected through configuration.
-- The external API key is read from environment variables.
+- OpenAI and Logos providers are supported.
+- External API credentials are read from environment variables.
 - Secrets are not committed to the repository.
-- The LLM response is parsed into the expected structure.
+- The provider response is parsed into the expected structure.
 - Invalid provider responses are handled.
 - Provider failures return clear application errors.
+- Automated tests do not call real external APIs.
 
 ### Tasks
 
-- [x] Implement OpenAI-compatible provider
+- [x] Implement OpenAI provider
+- [x] Implement Logos provider
 - [x] Add provider factory
-- [x] Add environment configuration
+- [x] Add provider-specific environment configuration
 - [x] Build itinerary prompt
 - [x] Parse structured output
 - [x] Add provider error handling
+- [x] Add mocked OpenAI provider tests
+- [x] Add mocked Logos provider tests
 - [x] Document provider configuration
 
 ---
@@ -894,7 +899,7 @@ As a developer, I want current project documentation so that contributors can un
 
 ## User Story 6.2: Maintain Contribution Rules
 
-**Status:** `Implemented / Ongoing`
+**Status:** `Implemented`
 
 As a contributor, I want a consistent development workflow so that changes remain small, testable, and reviewable.
 
@@ -915,8 +920,8 @@ As a contributor, I want a consistent development workflow so that changes remai
 - [x] Define branching strategy
 - [x] Define pull request rules
 - [x] Define secret-handling rules
-- [ ] Review all rules against the current repository workflow
-- [ ] Update outdated examples
+- [x] Review all rules against the current repository workflow
+- [x] Update outdated examples
 
 ---
 
@@ -940,14 +945,6 @@ The current MVP includes:
 - Azure automation
 - Prometheus monitoring
 - Grafana dashboards
-
-## Next Recommended Work
-
-1. Complete the documentation audit.
-2. Verify the GenAI suggestion endpoint integration across frontend and backend.
-3. Complete end-to-end budget integration only if it remains in the agreed scope.
-4. Improve automated integration and end-to-end tests.
-5. Address optional itinerary experience improvements only after required project work is complete.
 
 ## Lower-Priority Enhancements
 
