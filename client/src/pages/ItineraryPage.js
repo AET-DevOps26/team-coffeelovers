@@ -291,23 +291,40 @@ export default function ItineraryPage() {
       <Navbar />
 
       {/* ── Shared-by banner ── */}
-      {tripIdParam && currentUserId && tripOwnerId && currentUserId !== tripOwnerId && (
+      {tripIdParam && (!currentUserId || (tripOwnerId && currentUserId !== tripOwnerId)) && (
         <div style={{
           background: "#1e293b", color: "white",
           padding: "12px 24px", display: "flex", alignItems: "center",
           justifyContent: "center", gap: 16, fontSize: 14,
         }}>
           <span>
-            Shared by <strong>{tripAuthorUsername || "someone"}</strong> — save it to your plans?
+            {currentUserId
+              ? <>Shared by <strong>{tripAuthorUsername || "someone"}</strong> — save it to your plans?</>
+              : "This plan was shared with you — log in to save it to your account"
+            }
           </span>
-          <button
-            onClick={handleSaveShared}
-            style={{
-              background: "#c0622a", color: "white", border: "none",
-              borderRadius: 8, padding: "6px 16px", fontWeight: 700,
-              fontSize: 13, cursor: "pointer",
-            }}
-          >Save to My Plans</button>
+          {currentUserId ? (
+            <button
+              onClick={handleSaveShared}
+              style={{
+                background: "#c0622a", color: "white", border: "none",
+                borderRadius: 8, padding: "6px 16px", fontWeight: 700,
+                fontSize: 13, cursor: "pointer",
+              }}
+            >Save to My Plans</button>
+          ) : (
+            <button
+              onClick={() => {
+                sessionStorage.setItem("redirectAfterLogin", window.location.pathname + window.location.search);
+                navigate("/login");
+              }}
+              style={{
+                background: "#c0622a", color: "white", border: "none",
+                borderRadius: 8, padding: "6px 16px", fontWeight: 700,
+                fontSize: 13, cursor: "pointer",
+              }}
+            >Log in to save</button>
+          )}
         </div>
       )}
 
