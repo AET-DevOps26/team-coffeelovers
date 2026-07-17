@@ -456,6 +456,7 @@ docker compose logs grafana --tail=100
 
 Follow logs continuously:
 
+
 ```bash
 docker compose logs -f gateway
 ```
@@ -559,5 +560,7 @@ docker compose down -v
 docker compose build --no-cache
 docker compose --env-file .env up
 ```
+
+
 
 This removes local volumes, rebuilds images, and starts the stack from a clean state.
