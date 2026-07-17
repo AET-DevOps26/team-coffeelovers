@@ -12,8 +12,6 @@ Users currently provide:
 
 The application generates a structured day-by-day itinerary. Authenticated users can save their trips and share them through a generated link.
 
-The GenAI API also supports optional budget information. However, budget input is not yet connected to the complete frontend and backend workflow and is therefore considered a future improvement.
-
 ## 2. Current System Architecture
 
 The implemented system consists of:
